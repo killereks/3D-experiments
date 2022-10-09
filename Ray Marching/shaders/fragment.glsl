@@ -9,7 +9,7 @@ uniform vec2 resolution;
 uniform vec3 cameraPos;
 uniform vec3 cameraDir;
 
-#define MAX_STEPS 100
+#define MAX_STEPS 150
 #define MAX_DIST 1000.
 #define SURF_DIST 0.01
 
@@ -255,19 +255,22 @@ float random31(vec3 st) {
 float GetDist(vec3 p){
     float spacing = 15.0;
     vec4 s = vec4(0, 1, 6, 1.5);
+    
+    float planeDist = p.y + sin(p.x) * sin(p.z) * 0.1 + 3.0;
 
-    p = mod(p, spacing) - vec3(spacing * 0.5);
+    //p = mod(p, spacing) - vec3(spacing * 0.5);
 
     float frequency = 5;
 
     float displacement = sin(frequency * p.x) * sin(frequency * p.y) * sin(frequency * p.z) * 0.25;
     float sphereDist = length(p - s.xyz) - s.w + displacement;
-    float planeDist = p.y + sin(p.x) * sin(p.z) * 0.1 + 3.0;
 
     //float d = min(sphereDist, planeDist);
+    //return min(sphereDist, planeDist);
     float repeatedSphereDist = length(p) - 4.0 + displacement;
     
-    return repeatedSphereDist;
+    //return repeatedSphereDist;
+    return min(planeDist, evolvingFractal2(p));
 }
 
 float RayMarch(vec3 ro, vec3 rd){
@@ -336,7 +339,7 @@ void main(){
 
         vec3 materialColor = vec3(0.5, 0.6, 0.7);
 
-        col = GetNormal(p) * dif;
+        col = materialColor * dif;
     }
     FragColor = vec4(col, 1.0);
 } 

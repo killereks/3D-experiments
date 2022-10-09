@@ -14,9 +14,9 @@ def get_time():
 
 class RayTracer:
     def __init__(self):
-        self.width = 1000
-        self.height = 1000
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF)
+        self.width = 1920
+        self.height = 1080
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
         self.clock = pygame.time.Clock()
 
         gluPerspective(45, (self.width / self.height), 0.1, 50.0)
