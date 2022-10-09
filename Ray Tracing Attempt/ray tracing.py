@@ -24,6 +24,9 @@ class RayTracer:
         self.shader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl")
         self.shader.use()
 
+        self.cameraPos = numpy.array([0.0, 0.0, -3.0])
+        self.cameraDir = numpy.array([0.0, 0.0, 1.0])
+
         self.running = True
 
     def run(self):
@@ -37,22 +40,41 @@ class RayTracer:
             pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
 
     def handle_events(self):
+        # get keys
+        keys = pygame.key.get_pressed()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
+        if keys[pygame.K_w]:
+            self.cameraPos += self.cameraDir * 0.1
+        if keys[pygame.K_s]:
+            self.cameraPos -= self.cameraDir * 0.1
+        if keys[pygame.K_a]:
+            self.cameraPos += numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
+        if keys[pygame.K_d]:
+            self.cameraPos -= numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
+        if keys[pygame.K_q]:
+            self.cameraPos += numpy.array([0.0, 1.0, 0.0]) * 0.1
+        if keys[pygame.K_e]:
+            self.cameraPos -= numpy.array([0.0, 1.0, 0.0]) * 0.1
+
+
     def update(self):
         glUniform1f(glGetUniformLocation(self.shader.program, "time"), get_time())
         glUniform2f(glGetUniformLocation(self.shader.program, "resolution"), self.width, self.height)
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraPos"), self.cameraPos[0], self.cameraPos[1], self.cameraPos[2])
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraDir"), self.cameraDir[0], self.cameraDir[1], self.cameraDir[2])
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        glClearColor(0.1, 0.2, 0.3, 1.0)
+        glClearColor(0.0, 0.0, 0.0, 1.0)
         
         glColor3f(1.0, 1.0, 1.0)
 
-        size = 1
+        size = 1.0
 
         # draw a quad with the shader
         glBegin(GL_QUADS)
