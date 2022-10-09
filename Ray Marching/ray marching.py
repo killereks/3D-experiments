@@ -24,7 +24,7 @@ class RayTracer:
         self.shader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl")
         self.shader.use()
 
-        self.cameraPos = numpy.array([0.0, 1.0, 0.0])
+        self.cameraPos = numpy.array([0.0, 1.0, -3.0])
         self.cameraDir = numpy.array([0.0, 0.0, 1.0])
 
         self.running = True
@@ -55,10 +55,11 @@ class RayTracer:
             self.cameraPos += numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
         if keys[pygame.K_d]:
             self.cameraPos -= numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
-        if keys[pygame.K_q]:
-            self.cameraPos += numpy.array([0.0, 1.0, 0.0]) * 0.1
         if keys[pygame.K_e]:
+            self.cameraPos += numpy.array([0.0, 1.0, 0.0]) * 0.1
+        if keys[pygame.K_q]:
             self.cameraPos -= numpy.array([0.0, 1.0, 0.0]) * 0.1
+            
 
 
 
