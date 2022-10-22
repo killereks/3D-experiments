@@ -1,21 +1,62 @@
 import pygame
 import numpy
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.GL.shaders import compileShader, compileProgram
+
+import math
 
 import time
-
-from OpenGL.GL.shaders import compileShader, compileProgram
 
 start_time = time.time()
 
 def get_time():
     return time.time() - start_time
+   
+class Transform:
+    def __init__(self, position, rotation):
+        self.position = position
+        self.rotation = rotation
+       
+    def forward(self):
+        rotX = self.rotation[0] # pitch
+        rotY = self.rotation[1] # yaw
+        rotZ = self.rotation[2] # roll
+       
+        x = math.sin(rotY) * math.cos(rotX)
+        y = math.sin(-rotX)
+        z = math.cos(rotX) * math.cos(rotY)
+       
+        return numpy.array([x,y,z])
+       
+    def right(self):
+        rotX = self.rotation[0] # pitch
+        rotY = self.rotation[1] # yaw
+        rotZ = self.rotation[2] # roll
+       
+        x = math.cos(rotY)
+        y = 0
+        z = -math.sin(rotY)
+       
+        return numpy.array([x,y,z])
+       
+    def up(self):
+        return numpy.cross(self.forward(), self.right())
+       
+    def move(self, delta):
+        self.position = numpy.add(self.position, delta)
+       
+    def rotate(self, delta):
+        self.rotation = numpy.add(self.rotation, delta)
+       
+    def print(self):
+        print("position", self.position,"rotation",self.rotation)
 
 class RayTracer:
     def __init__(self):
-        self.width = 1920
-        self.height = 1080
+        self.width = 1000
+        self.height = 1000
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
         self.clock = pygame.time.Clock()
 
@@ -23,9 +64,11 @@ class RayTracer:
 
         self.shader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl")
         self.shader.use()
-
-        self.cameraPos = numpy.array([0.0, 1.0, -3.0])
-        self.cameraDir = numpy.array([0.0, 0.0, 1.0])
+       
+        cameraPos = numpy.array([0,1,-3])
+        cameraRot = numpy.array([0,0,0])
+       
+        self.cameraT = Transform(cameraPos, cameraRot)
 
         self.running = True
 
@@ -35,6 +78,8 @@ class RayTracer:
             self.handle_events()
             self.update()
             self.draw()
+           
+            self.cameraT.print()
 
             #display fps
             pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
@@ -47,33 +92,49 @@ class RayTracer:
             if event.type == pygame.QUIT:
                 self.running = False
 
+        fwd = self.cameraT.forward()
+        right = self.cameraT.right()
+        up = self.cameraT.up()
+
         if keys[pygame.K_w]:
-            self.cameraPos += self.cameraDir * 0.1
+            self.cameraT.move(fwd * 0.1)
         if keys[pygame.K_s]:
-            self.cameraPos -= self.cameraDir * 0.1
+            self.cameraT.move(fwd * -0.1)
         if keys[pygame.K_a]:
-            self.cameraPos += numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
+            self.cameraT.move(right * -0.1)
         if keys[pygame.K_d]:
-            self.cameraPos -= numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
+            self.cameraT.move(right * 0.1)
         if keys[pygame.K_e]:
-            self.cameraPos += numpy.array([0.0, 1.0, 0.0]) * 0.1
+            self.cameraT.move(up * 0.1)
         if keys[pygame.K_q]:
-            self.cameraPos -= numpy.array([0.0, 1.0, 0.0]) * 0.1
-            
+            self.cameraT.move(up * -0.1)
 
-
+        mouseDelta = pygame.mouse.get_rel()
+        # is mouse held down
+        if pygame.mouse.get_pressed()[0]:
+            deltaX, deltaY = mouseDelta[0], mouseDelta[1]
+        
+            rotation = numpy.array([deltaY, deltaX, 0])
+            self.cameraT.rotate(rotation * 0.01)
 
     def update(self):
+        cameraPos = self.cameraT.position
+       
+        cameraFwd = self.cameraT.forward()
+        cameraRight = self.cameraT.right()
+   
         glUniform1f(glGetUniformLocation(self.shader.program, "time"), get_time())
         glUniform2f(glGetUniformLocation(self.shader.program, "resolution"), self.width, self.height)
-        glUniform3f(glGetUniformLocation(self.shader.program, "cameraPos"), self.cameraPos[0], self.cameraPos[1], self.cameraPos[2])
-        glUniform3f(glGetUniformLocation(self.shader.program, "cameraDir"), self.cameraDir[0], self.cameraDir[1], self.cameraDir[2])
+       
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraPos"), cameraPos[0], cameraPos[1], cameraPos[2])
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraFwd"), cameraFwd[0], cameraFwd[1], cameraFwd[2])
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraRight"), cameraRight[0], cameraRight[1], cameraRight[2])
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         glClearColor(0.0, 0.0, 0.0, 1.0)
-        
+       
         glColor3f(1.0, 1.0, 1.0)
 
         size = 1.0
@@ -85,6 +146,7 @@ class RayTracer:
         glVertex2f(size, size)
         glVertex2f(-size, size)
         glEnd()
+       
 
         pygame.display.flip()
 
@@ -98,7 +160,7 @@ class Shader:
 
         vertexShader = compileShader(vertexSource, GL_VERTEX_SHADER)
         fragmentShader = compileShader(fragmentSource, GL_FRAGMENT_SHADER)
-        
+       
         # see if there are any errors
         vCompileStatus = glGetShaderiv(vertexShader, GL_COMPILE_STATUS)
         if vCompileStatus != GL_TRUE:
