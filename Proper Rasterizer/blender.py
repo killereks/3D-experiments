@@ -1,0 +1,71 @@
+import numpy as np
+from custom_logging import LOG
+
+import Mesh
+
+def load_obj_file(file_name):
+	'''
+	Function for loading a Blender3D object file. minimalistic, and partial,
+	but sufficient for this course. You do not really need to worry about it.
+	'''
+	
+	LOG(f"Attemping to load {file_name}")
+	
+	vertices = []
+	normals = []
+	texcoords = []
+	faces = []
+
+	with open(file_name) as objfile:
+		# loop over all lines in the file
+
+		for line in objfile:
+			line = line.strip()
+			# skip empty lines
+			if not line: continue
+
+			# split the line into labels
+			label = line.split()
+
+			# skip comments
+			if label[0] == '#': continue
+			
+			# vertex
+			if label[0] == 'v':
+				vertices.append([float(x) for x in label[1:]])
+			
+			# vertex normal
+			elif label[0] == 'vn':
+				normals.append([float(x) for x in label[1:]])
+
+			# texture coordinate
+			elif label[0] == 'vt':
+				texcoords.append([float(x) for x in label[1:]])
+
+			# face
+			elif label[0] == 'f':
+				# parse the face
+				face = []
+				for v in label[1:]:
+					# split the vertex into its components
+					v = v.split('/')
+					# the first component is the vertex index
+					face.append(int(v[0]) - 1)
+				# add the face to the list of faces
+				faces.append(face)
+
+		# convert to numpy arrays
+		vertices = np.array(vertices, dtype='f')
+		normals = np.array(normals, dtype='f')
+		texcoords = np.array(texcoords, dtype='f')
+		
+		faces = np.array(faces, dtype=np.uint32)
+
+		LOG(f"Loaded {file_name} with {len(vertices):,} vertices, {len(normals):,} normals, {len(texcoords):,} texcoords, and {len(faces):,} faces")
+
+		return vertices, faces, normals, texcoords
+
+def load_mesh(file_name):
+	vertices, faces, normals, texcoords = load_obj_file(file_name)
+
+	return Mesh.Mesh(vertices, faces, normals, texcoords)
