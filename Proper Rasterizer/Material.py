@@ -1,7 +1,12 @@
 import numpy as np
 
+class FaceTypes:
+    CULL_BACK = 0
+    CULL_FRONT = 1
+    DOUBLE_SIDED = 2
+
 class Material:
-    def __init__(self):
+    def __init__(self, shader):
         # ambient
         self.Ka = np.array([0.2, 0.2, 0.2])
         # diffuse
@@ -16,6 +21,20 @@ class Material:
         self.d = 1.0
         # illumination
         self.illum = 2
+        
+        self.textures = []
+        self.shader = shader
+
+        self.face_type = FaceTypes.CULL_BACK
+
+    def add_texture(self, tex):
+        self.textures.append(tex)
+
+    def use(self):
+        for (index, tex) in enumerate(self.textures):
+            tex.use(index)
+        
+        self.shader.use()
 
     def print(self):
         print(f"Ka: {self.Ka}")

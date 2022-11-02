@@ -116,6 +116,11 @@ class Quaternion:
 
     @staticmethod
     def FromAxisAngle(axis, angle):
+        """
+        Create a quaternion from an axis and an angle
+        :param axis: the axis of rotation
+        :param angle: the angle of rotation in degrees
+        """
         axis = axis / np.linalg.norm(axis)
         angle = np.radians(angle)
         s = np.sin(angle / 2)

@@ -15,6 +15,11 @@ class Transform:
     def rotate(self, x, y, z):
         self.rotation *= Quaternion.FromEuler(x, y, z)
 
+    def rotateLocal(self, x, y, z):
+        self.rotateAxis(self.right(), x)
+        self.rotateAxis(self.up(), y)
+        self.rotateAxis(self.forward(), z)
+
     def scaleAdd(self, x, y, z):
         self.scale += np.array([x, y, z])
 
@@ -39,8 +44,18 @@ class Transform:
         S = self.getScaleMatrix()
         
         return np.matmul(T, np.matmul(R, S))
-        
+
     def forward(self):
+        return Quaternion.MultiplyVector(self.rotation, np.array([0,0,1]))
+    
+    def right(self):
+        return Quaternion.MultiplyVector(self.rotation, np.array([1,0,0]))
+
+    def up(self):
+        return Quaternion.MultiplyVector(self.rotation, np.array([0,1,0]))
+
+        
+    """def forward(self):
         rotX, rotY, rotZ = self.rotation.ToEuler()
 
         rotX = np.radians(rotX)
@@ -67,7 +82,7 @@ class Transform:
         return np.array([x, y, z])
 
     def up(self):
-        return np.cross(self.forward(), self.right())
+        return np.cross(self.forward(), self.right())"""
             
 
     def getTranslationMatrix(self):

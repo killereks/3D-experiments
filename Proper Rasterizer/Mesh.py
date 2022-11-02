@@ -24,10 +24,12 @@ class Mesh:
 
         self.bounds = self.getBoundingBox()
 
-        self.transform.scaleAllMult(0.05)
-        self.transform.translate(0, 0, 0.1)
+        self.material = None
 
         LOG(f"Bounds (including scale): {self.bounds * self.transform.scale}")
+
+    def set_material(self, material):
+        self.material = material
 
     def getBoundingBox(self):
         min = [0, 0, 0]
@@ -58,8 +60,6 @@ class Mesh:
         LOG(f"Recalculated normals for mesh {self} with {len(self.normals)} normals")
 
     def draw(self):
-        self.transform.rotateAxis([0, 1, 0], 1)
-
         glEnableClientState(GL_VERTEX_ARRAY)
 
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
@@ -68,14 +68,20 @@ class Mesh:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, self.faces, GL_STATIC_DRAW)
 
-        glVertexPointer(3, GL_FLOAT, 0, None)
-        glDrawElements(GL_TRIANGLES, len(self.faces) * 3, GL_UNSIGNED_INT, None)
-
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(index=0, size=self.vertices.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
 
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(index=1, size=self.normals.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
 
-        #glEnableVertexAttribArray(2)
-        #glVertexAttribPointer(index=2, size=self.uvs.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(index=2, size=self.uvs.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
+
+        glDrawElements(GL_TRIANGLES, self.faces.size, GL_UNSIGNED_INT, None)
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+
+
+    def update(self, dt):
+        self.transform.rotateAxis([0, 1, 0], dt * 5)
