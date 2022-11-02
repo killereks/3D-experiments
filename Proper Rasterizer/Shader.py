@@ -18,3 +18,6 @@ class Shader:
         
     def use(self):
         glUseProgram(self.program)
+
+    def get_keyword(self, keyword):
+        return glGetUniformLocation(self.program, keyword)

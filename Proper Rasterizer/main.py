@@ -12,8 +12,6 @@ import numpy as np
 
 import time
 
-import pyrr
-
 import blender
 import MaterialLibrary
 import Shader
@@ -28,8 +26,8 @@ pygame.init()
 
 class Scene:
     def __init__(self):
-        self.width = 800
-        self.height = 600
+        self.width = 1024
+        self.height = 768
 
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF, 24)
 
@@ -39,20 +37,17 @@ class Scene:
 
         self.meshes = []
 
-        self.camera = Camera(60, 0.1, 1000)
+        aspect = self.width / self.height
 
-        gluPerspective(60, self.width / self.height, 0.1, 1000)
+        self.camera = Camera(80, aspect, 0.1, 100)
+        self.camera.transform.translate(0, 0, -1)
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
+        
+        glCullFace(GL_BACK)
 
-        glShadeModel(GL_SMOOTH)
-
-        glTranslatef(0.0, 0.0, -10)
-
-        glViewport(0, 0, self.width, self.height)
-
-        glClearColor(0.2, 0.3, 0.2, 1.0)
+        glClearColor(0.1, 0.2, 0.3, 1.0)
 
 
     def add_mesh(self, mesh):
@@ -61,37 +56,54 @@ class Scene:
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        lit_shader.use()
         for mesh in self.meshes:
             self.set_matrices(mesh)
             mesh.draw()
 
+        self.debug()
+
+    def debug(self):
+        unlit_shader.use()
+        # draw forward, right and up vectors from the origin
+        self.draw_axes()
+        
+    def draw_axes(self):
+        glUniformMatrix4fv(unlit_shader.get_keyword("model"), 1, GL_FALSE, np.identity(4))
+        glUniformMatrix4fv(unlit_shader.get_keyword("view"), 1, GL_FALSE, self.camera.getViewMatrix())
+        glUniformMatrix4fv(unlit_shader.get_keyword("projection"), 1, GL_FALSE, self.camera.projectionMatrix)
+
+        LENGTH = 2
+
+        glBegin(GL_LINES)
+        glColor3f(1, 0, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(LENGTH, 0, 0)
+
+        glColor3f(0, 1, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, LENGTH, 0)
+
+        glColor3f(0, 0, 1)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 0, LENGTH)
+
+        glEnd()
+
+
     # method that supplies model, view and projection matrices to the shader
     def set_matrices(self, mesh):
-        # set model matrix
-        #glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, mesh.transform.getTRSMatrix())
-
-        # set view matrix
-        #glUniformMatrix4fv(glGetUniformLocation(shader.program, "view"), 1, GL_FALSE, self.camera.getViewMatrix())
-
-        # set projection matrix
-        #glUniformMatrix4fv(glGetUniformLocation(shader.program, "projection"), 1, GL_FALSE, self.camera.projectionMatrix)
-
         model_matrix = mesh.transform.getTRSMatrix()
         view_matrix = self.camera.getViewMatrix()
         projection_matrix = self.camera.projectionMatrix
 
-        model_matrix = np.identity(4)
-        view_matrix = np.identity(4)
-        projection_matrix = np.identity(4)
-
-        glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, model_matrix)
-        glUniformMatrix4fv(glGetUniformLocation(shader.program, "view"), 1, GL_FALSE, view_matrix)
-        glUniformMatrix4fv(glGetUniformLocation(shader.program, "projection"), 1, GL_FALSE, projection_matrix)
-        #glUniformMatrix4fv(glGetUniformLocation(shader.program, "PVM"), 1, GL_FALSE, PVM)
+        glUniformMatrix4fv(lit_shader.get_keyword("model"), 1, GL_FALSE, model_matrix)
+        glUniformMatrix4fv(lit_shader.get_keyword("view"), 1, GL_FALSE, view_matrix)
+        glUniformMatrix4fv(lit_shader.get_keyword("projection"), 1, GL_FALSE, projection_matrix)
 
     def update(self):
         # set current shader time
-        glUniform1f(glGetUniformLocation(shader.program, "time"), current_time())
+        glUniform1f(lit_shader.get_keyword("time"), current_time())
 
 
     def run(self):
@@ -112,38 +124,30 @@ class Scene:
             if pygame.mouse.get_pressed()[0]:
                 rotX = mouse_delta[0] * 0.1
                 rotY = mouse_delta[1] * 0.1
-
-                self.camera.transform.rotate(rotY, rotX, 0)
+                
+                self.camera.rotate(rotY, rotX, 0)
 
             #print(self.camera.transform.position, self.camera.transform.rotation)
 
-            #W
             if keys[pygame.K_w]:
-                self.camera.transform.position += self.camera.transform.forward() * 0.1
-            #S
+                self.camera.transform.position += self.camera.transform.forward() * 0.01
             if keys[pygame.K_s]:
-                self.camera.transform.position -= self.camera.transform.forward() * 0.1
-            #A
+                self.camera.transform.position -= self.camera.transform.forward() * 0.01
             if keys[pygame.K_a]:
-                self.camera.transform.position -= self.camera.transform.right() * 0.1
-            #D
+                self.camera.transform.position -= self.camera.transform.right() * 0.01
             if keys[pygame.K_d]:
-                self.camera.transform.position += self.camera.transform.right() * 0.1
-            #E
-            if keys[pygame.K_e]:
-                self.camera.transform.position += self.camera.transform.up() * 0.1
-            #Q
+                self.camera.transform.position += self.camera.transform.right() * 0.01
             if keys[pygame.K_q]:
-                self.camera.transform.position -= self.camera.transform.up() * 0.1
-
-            self.clock.tick(165)
-            # display fps
-            pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
+                self.camera.transform.position += self.camera.transform.up() * 0.01
+            if keys[pygame.K_e]:
+                self.camera.transform.position -= self.camera.transform.up() * 0.01
 
             self.update()
             self.draw()
 
+            self.clock.tick(165)
             pygame.display.flip()
+            pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
 
 def current_time():
     return time.time() - start_time
@@ -151,11 +155,23 @@ def current_time():
 
 scene = Scene()
 
-shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
-shader.use()
+lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
+lit_shader.use()
 
-monkey_mesh = blender.load_mesh("models/monkey/monkey.obj")
-scene.add_mesh(monkey_mesh)
+unlit_shader = Shader.Shader("shaders/unlit/vertex.glsl", "shaders/unlit/fragment.glsl")
+unlit_shader.use()
+
+#monkey_mesh = blender.load_mesh("models/monkey/monkey.obj")
+#monkey_mesh.recalculate_normals()
+#scene.add_mesh(monkey_mesh)
+
+floor_mesh = blender.load_mesh("models/floor/floor.obj")
+floor_mesh.recalculate_normals()
+scene.add_mesh(floor_mesh)
+
+#torus_mesh = blender.load_mesh("models/torus/torus.obj")
+#torus_mesh.recalculate_normals()
+#scene.add_mesh(torus_mesh)
 
 #car_mesh = blender.load_mesh('models/car/audi r8.obj')
 #scene.add_mesh(car_mesh)

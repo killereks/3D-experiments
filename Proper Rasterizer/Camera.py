@@ -4,13 +4,13 @@ import numpy as np
 from custom_logging import LOG
 
 class Camera:
-    def __init__(self, fov, near, far):
+    def __init__(self, fov, aspect, near, far):
         self.transform = Transform()
         self.fov = fov
         self.near = near
         self.far = far
 
-        self.aspect = 16 / 9
+        self.aspect = aspect
 
         self.projectionMatrix = self.getProjectionMatrix()
 
@@ -22,19 +22,22 @@ class Camera:
         Returns a projection matrix for the camera.
         :return: the 4x4 projection matrix
         '''
-        fov = np.deg2rad(self.fov)
         
-        tan = np.tan(fov / 2)
-        
-        matrix = np.zeros((4, 4))
+        fov_r = np.deg2rad(self.fov)
+        aspect = self.aspect
 
-        matrix[0][0] = 1 / (tan * self.aspect)
-        matrix[1][1] = 1 / tan
-        matrix[2][2] = -(self.far + self.near) / (self.far - self.near)
-        matrix[2][3] = -1
-        matrix[3][2] = -(2 * self.far * self.near) / (self.far - self.near)
+        tan = np.tan(fov_r * 0.5)
 
-        return matrix
+        far = self.far
+        near = self.near
+
+        return np.array([
+            [1 / (aspect * tan), 0, 0, 0],
+            [0, 1/tan, 0, 0],
+            [0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near)],
+            [0, 0, -1, 0]
+        ])
+
 
 
     def getViewMatrix(self):
@@ -42,5 +45,7 @@ class Camera:
         Returns a view matrix for the camera.
         :return: the 4x4 view matrix
         '''
-        return self.transform.getTRSMatrix()
+        R = self.transform.rotation.ToMatrix()
+        T = self.transform.getTranslationMatrix()
+        return np.matmul(R, T)
         

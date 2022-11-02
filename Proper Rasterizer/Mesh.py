@@ -4,6 +4,8 @@ from OpenGL.GL import *
 
 from custom_logging import LOG
 
+import numpy as np
+
 import time
 import math
 
@@ -22,9 +24,10 @@ class Mesh:
 
         self.bounds = self.getBoundingBox()
 
-        self.transform.scaleMult(0.3, 0.3, 0.3)
+        self.transform.scaleAllMult(0.05)
+        self.transform.translate(0, 0, 0.1)
 
-        LOG(f"Bounds: {self.bounds}")
+        LOG(f"Bounds (including scale): {self.bounds * self.transform.scale}")
 
     def getBoundingBox(self):
         min = [0, 0, 0]
@@ -38,6 +41,21 @@ class Mesh:
                     max[j] = self.vertices[i][j]
 
         return [min, max]
+
+    def recalculate_normals(self):
+        self.normals = np.zeros(self.vertices.shape, dtype="f")
+        
+        for f in range(self.faces.shape[0]):
+            a = self.vertices[self.faces[f, 1]] - self.vertices[self.faces[f, 0]]
+            b = self.vertices[self.faces[f, 2]] - self.vertices[self.faces[f, 0]]
+            n = np.cross(a, b)
+
+            for j in range(3):
+                self.normals[self.faces[f,j],:] += n
+
+        self.normals /= np.linalg.norm(self.normals, axis=1, keepdims=True)
+
+        LOG(f"Recalculated normals for mesh {self} with {len(self.normals)} normals")
 
     def draw(self):
         self.transform.rotateAxis([0, 1, 0], 1)
@@ -59,5 +77,5 @@ class Mesh:
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(index=1, size=self.normals.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
 
-        glEnableVertexAttribArray(2)
-        glVertexAttribPointer(index=2, size=self.uvs.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
+        #glEnableVertexAttribArray(2)
+        #glVertexAttribPointer(index=2, size=self.uvs.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
