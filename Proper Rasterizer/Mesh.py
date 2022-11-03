@@ -64,7 +64,7 @@ class Mesh:
 
         self.normals /= np.linalg.norm(self.normals, axis=1, keepdims=True)
 
-        LOG(f"Recalculated normals for mesh {self} with {len(self.normals)} normals")
+        LOG(f"Recalculated normals for mesh {self.name} with {len(self.normals)} normals")
 
         self.initialize()
 

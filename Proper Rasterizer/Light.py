@@ -13,7 +13,7 @@ class Light:
         return self.transform.forward()
 
     def getLightProjection(self):
-        size = 50
+        size = 15
         return Camera.getOrthographicMatrix(-size, size, -size, size, 0.1, 30)
 
     def getLightView(self):

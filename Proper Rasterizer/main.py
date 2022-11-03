@@ -138,16 +138,9 @@ class Scene:
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glUniform1i(shader.get_keyword("shadowMap"), 0)
 
+        glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
+
         mesh.material.use(shader)
-        #mesh.material.textures[0].use(1)
-        #glUniform1i(shader.get_keyword("_MainTex"), 1)
-
-        """mat = mesh.material
-        glUniform1f(shader.get_keyword("time"), current_time())
-
-        self.set_face_culling(mat.face_type)
-        
-        mat.use()"""
     
     def set_face_culling(self, cull_face_type):
         if cull_face_type == FaceTypes.CULL_BACK:
@@ -161,7 +154,7 @@ class Scene:
 
 
     def update(self, dt):
-        self.sun.transform.position = np.array([np.cos(current_time()) * 10, 10, np.sin(current_time()) * 10])
+        self.sun.transform.position = np.array([np.cos(current_time()) * 5, 10, np.sin(current_time()) * 5])
 
         for mesh in self.meshes:
             mesh.update(dt)
@@ -233,8 +226,12 @@ class Scene:
                 
                 texture_data = material_data["textures"]
 
+                tiling = np.array(material_data["tiling"])
+
                 mat = Material()
                 mat.name = material_name
+
+                mat.tiling = tiling
 
                 mat.shader = lit_shader
 
@@ -277,41 +274,6 @@ scene = Scene()
 
 shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
 lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
-
-"""
-unlit_shader = Shader.Shader("shaders/unlit/vertex.glsl", "shaders/unlit/fragment.glsl")
-shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
-debug_shader = Shader.Shader("shaders/debug/debug_quad_vs.glsl", "shaders/debug/debug_quad_fs.glsl")
-
-texture = Texture("textures/senya2.jpg")
-cat_texture = Texture("textures/cat.jpg")
-
-material = Material()
-material.add_texture(texture, "_MainTex")
-
-cat_material = Material()
-cat_material.tiling = np.array([1, 1])
-cat_material.add_texture(cat_texture, "_MainTex")
-
-monkey_mesh = blender.load_mesh("models/monkey/monkey.obj")
-monkey_mesh.recalculate_normals()
-monkey_mesh.set_material(material)
-monkey_mesh.transform.translate(0, 2, 0)
-
-floor_mesh = blender.load_mesh("models/floor/floor.obj")
-#floor_mesh.recalculate_normals()
-#floor_mesh.transform.scaleAllMult(20)
-floor_mesh.set_material(cat_material)
-
-scene.add_mesh(monkey_mesh)
-scene.add_mesh(floor_mesh)
-
-#torus_mesh = blender.load_mesh("models/torus/torus.obj")
-#torus_mesh.recalculate_normals()
-#scene.add_mesh(torus_mesh)
-
-#car_mesh = blender.load_mesh('models/car/audi r8.obj')
-#scene.add_mesh(car_mesh)"""
 
 scene.load_scene("scene.yaml")
 

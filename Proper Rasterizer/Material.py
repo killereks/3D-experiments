@@ -41,7 +41,7 @@ class Material:
         for index, name in enumerate(self.textures):
             texture = self.textures[name]
             texture.use(index+1) # 0 = shadow map so we start at 1
-            glUniform1i(shader.get_keyword(name), 1)
+            glUniform1i(shader.get_keyword(name), index+1)
 
         # material uniforms
         glUniform2fv(shader.get_keyword("tiling"), 1, self.tiling)

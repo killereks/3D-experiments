@@ -1,23 +1,27 @@
 Materials:
   mat0:
     textures:
-      _MainTex: textures/cat.jpg
+      _MainTex: textures/checkerboard.png
+    tiling: [10, 10]
 
   mat1:
     textures:
-      _MainTex: textures/checkerboard.png
+      _MainTex: textures/Marble/Color.jpg
+      _NormalMap: textures/Marble/Normal.jpg
+      _RoughnessMap: textures/Marble/Roughness.jpg
+    tiling: [1,1]
 
 Meshes:
   model0:
-    path: models/monkey/monkey.obj
-    material: mat0
+    path: models/random/sphere.obj
+    material: mat1
     position: [0, 2, 0]
     rotation: [0, 0, 0]
     scale: [1, 1, 1]
-    recalculateNormals: false
+    recalculateNormals: true
   model1:
     path: models/quad/quad.obj
-    material: mat1
+    material: mat0
     position: [0, 0, 0]
     rotation: [0, 0, 0]
     scale: [10, 10, 10]
