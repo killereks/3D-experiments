@@ -10,17 +10,19 @@ out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoords;
 
+out vec4 FragPosLightSpace;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix; // world space -> light space
 
 void main(){
-    gl_Position = transpose(projection) * transpose(view) * transpose(model) * vec4(vPos, 1.0);
+    gl_Position = projection * view * model * vec4(vPos, 1.0);
 
-    Normal = vNormal;
+    Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     FragPos = vec3(model * vec4(vPos, 1.0));
-    //Normal = normalize(mat3(transpose(inverse(model))) * vNormal);
-    // we don't transpose because (A^T)^T = A
-    Normal = normalize(mat3(inverse(model)) * vNormal);
     TexCoords = vTexCoords;
+
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 }

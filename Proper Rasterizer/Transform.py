@@ -91,7 +91,7 @@ class Transform:
             [0, 1, 0, self.position[1]],
             [0, 0, 1, self.position[2]],
             [0, 0, 0, 1]
-        ])
+        ],"f")
 
     def getScaleMatrix(self):
         return np.array([
@@ -99,7 +99,7 @@ class Transform:
             [0, self.scale[1], 0, 0],
             [0, 0, self.scale[2], 0],
             [0, 0, 0, 1]
-        ])
+        ],"f")
 
     def rotateAxis(self, vector, angle):
         self.rotation *= Quaternion.FromAxisAngle(vector, angle)
@@ -119,5 +119,38 @@ class Transform:
             [xaxis[0], yaxis[0], zaxis[0], position[0]],
             [xaxis[1], yaxis[1], zaxis[1], position[1]],
             [xaxis[2], yaxis[2], zaxis[2], position[2]],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def RotationMatrixX(angle):
+        angle = np.radians(angle)
+
+        return np.array([
+            [1, 0, 0, 0],
+            [0, np.cos(angle), -np.sin(angle), 0],
+            [0, np.sin(angle), np.cos(angle), 0],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def RotationMatrixY(angle):
+        angle = np.radians(angle)
+
+        return np.array([
+            [np.cos(angle), 0, np.sin(angle), 0],
+            [0, 1, 0, 0],
+            [-np.sin(angle), 0, np.cos(angle), 0],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def RotationMatrixZ(angle):
+        angle = np.radians(angle)
+
+        return np.array([
+            [np.cos(angle), -np.sin(angle), 0, 0],
+            [np.sin(angle), np.cos(angle), 0, 0],
+            [0, 0, 1, 0],
             [0, 0, 0, 1]
         ])

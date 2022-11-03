@@ -13,12 +13,17 @@ import numpy as np
 import time
 
 import blender
-import MaterialLibrary
+from MaterialLibrary import MaterialLibrary
 import Shader
 from Material import Material, FaceTypes
 from Texture import Texture
 from Transform import Transform
 from Camera import Camera
+from Quaternion import Quaternion
+from Light import *
+from Mesh import Mesh
+
+import yaml
 
 from custom_logging import LOG, LogLevel
 
@@ -44,6 +49,14 @@ class Scene:
         self.camera = Camera(80, aspect, 0.1, 100)
         self.camera.transform.translate(0, -2, -2)
 
+        self.depthMapFBO = glGenFramebuffers(1)
+        self.depthMap = glGenTextures(1)
+
+        self.shadow_map_size = 2048
+
+        self.sun = Light(np.array([1,1,1],"f"),1)
+        self.sun.transform.translate(5, 10, 0)
+
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
         
@@ -57,58 +70,84 @@ class Scene:
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glViewport(0, 0, self.width, self.height)
+        
+        self.simple_draw(lit_shader)
 
-        lit_shader.use()
+        #self.debug()
+
+    def simple_draw(self, shader):
+        shader.use()
+
         for mesh in self.meshes:
-            self.set_matrices(mesh)
+            self.set_matrices(mesh, shader)
             mesh.draw()
 
-        self.debug()
+    def shadow_map(self):
+        glBindTexture(GL_TEXTURE_2D, self.depthMap)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_size, self.shadow_map_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
-    def debug(self):
-        unlit_shader.use()
-        # draw forward, right and up vectors from the origin
-        self.draw_axes()
+        glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.depthMap, 0)
+        glDrawBuffer(GL_NONE)
+        glReadBuffer(GL_NONE)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+        lightProjection = self.sun.getLightProjection()
+        lightView = self.sun.getLightView()
+
+        lightSpaceMatrix = np.matmul(lightProjection, lightView)
+
+        shadow_map_shader.use()
+        glUniformMatrix4fv(shadow_map_shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, lightSpaceMatrix)
+
+        glViewport(0, 0, self.shadow_map_size, self.shadow_map_size)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
+        glClear(GL_DEPTH_BUFFER_BIT)
         
-    def draw_axes(self):
-        glUniformMatrix4fv(unlit_shader.get_keyword("model"), 1, GL_FALSE, np.identity(4))
-        glUniformMatrix4fv(unlit_shader.get_keyword("view"), 1, GL_FALSE, self.camera.getViewMatrix())
-        glUniformMatrix4fv(unlit_shader.get_keyword("projection"), 1, GL_FALSE, self.camera.projectionMatrix)
+        self.simple_draw(shadow_map_shader)
 
-        LENGTH = 2
-
-        glBegin(GL_LINES)
-        glColor3f(1, 0, 0)
-        glVertex3f(0, 0, 0)
-        glVertex3f(LENGTH, 0, 0)
-
-        glColor3f(0, 1, 0)
-        glVertex3f(0, 0, 0)
-        glVertex3f(0, LENGTH, 0)
-
-        glColor3f(0, 0, 1)
-        glVertex3f(0, 0, 0)
-        glVertex3f(0, 0, LENGTH)
-
-        glEnd()
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 
     # method that supplies model, view and projection matrices to the shader
-    def set_matrices(self, mesh):
+    def set_matrices(self, mesh, shader):
+        shader.use()
+
         model_matrix = mesh.transform.getTRSMatrix()
         view_matrix = self.camera.getViewMatrix()
         projection_matrix = self.camera.projectionMatrix
 
-        glUniformMatrix4fv(lit_shader.get_keyword("model"), 1, GL_FALSE, model_matrix)
-        glUniformMatrix4fv(lit_shader.get_keyword("view"), 1, GL_FALSE, view_matrix)
-        glUniformMatrix4fv(lit_shader.get_keyword("projection"), 1, GL_FALSE, projection_matrix)
+        glUniformMatrix4fv(shader.get_keyword("model"), 1, GL_TRUE, model_matrix)
+        glUniformMatrix4fv(shader.get_keyword("view"), 1, GL_TRUE, view_matrix)
+        glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, projection_matrix)
 
-        mat = mesh.material
-        glUniform1f(mat.shader.get_keyword("time"), current_time())
+        # light uniforms
+        glUniform3fv(shader.get_keyword("viewPos"), 1, self.camera.transform.position)
+        glUniform3fv(shader.get_keyword("lightPos"), 1, self.sun.transform.position)
+        # light space matrix
+        lightSpaceMatrix = self.sun.getLightSpaceMatrix()
+        glUniformMatrix4fv(shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, lightSpaceMatrix)
+
+        # shadow map
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.depthMap)
+        glUniform1i(shader.get_keyword("shadowMap"), 0)
+
+        mesh.material.use(shader)
+        #mesh.material.textures[0].use(1)
+        #glUniform1i(shader.get_keyword("_MainTex"), 1)
+
+        """mat = mesh.material
+        glUniform1f(shader.get_keyword("time"), current_time())
 
         self.set_face_culling(mat.face_type)
         
-        mat.use()
+        mat.use()"""
     
     def set_face_culling(self, cull_face_type):
         if cull_face_type == FaceTypes.CULL_BACK:
@@ -122,7 +161,7 @@ class Scene:
 
 
     def update(self, dt):
-        # set current shader time
+        self.sun.transform.position = np.array([np.cos(current_time()) * 10, 10, np.sin(current_time()) * 10])
 
         for mesh in self.meshes:
             mesh.update(dt)
@@ -137,9 +176,9 @@ class Scene:
                     self.running = False
 
             fps = self.clock.get_fps()
-            pygame.display.set_caption("FPS: " + str(fps))
-
             dt = 1.0 if fps == 0 else 1.0 / fps
+
+            pygame.display.set_caption(f"FPS: {fps} ({dt*1000}ms)")
 
             # holding keys
             keys = pygame.key.get_pressed()
@@ -149,33 +188,86 @@ class Scene:
 
             # if mouse is held down
             if pygame.mouse.get_pressed()[0]:
-                rotX = mouse_delta[0] * dt * 10
-                rotY = mouse_delta[1] * dt * 10
+                rotX = mouse_delta[0] * dt * 50
+                rotY = mouse_delta[1] * dt * 50
                 
-                self.camera.rotate(rotY, rotX, 0)
+                self.camera.rotate_local(rotY, rotX)
 
             #print(self.camera.transform.position, self.camera.transform.rotation)
 
             speed = 1.0 * dt
 
+            # if holding left shift
+            if keys[pygame.K_LSHIFT]:
+                speed *= 5
+
             if keys[pygame.K_w]:
-                self.camera.transform.position += self.camera.transform.forward() * speed
+                self.camera.transform.position += self.camera.forward() * speed
             if keys[pygame.K_s]:
-                self.camera.transform.position -= self.camera.transform.forward() * speed
+                self.camera.transform.position -= self.camera.forward() * speed
             if keys[pygame.K_a]:
-                self.camera.transform.position += self.camera.transform.right() * speed
+                self.camera.transform.position += self.camera.right() * speed
             if keys[pygame.K_d]:
-                self.camera.transform.position -= self.camera.transform.right() * speed
+                self.camera.transform.position -= self.camera.right() * speed
             if keys[pygame.K_q]:
-                self.camera.transform.position += self.camera.transform.up() * speed
+                self.camera.transform.position += self.camera.up() * speed
             if keys[pygame.K_e]:
-                self.camera.transform.position -= self.camera.transform.up() * speed
+                self.camera.transform.position -= self.camera.up() * speed
 
             self.update(dt)
+            self.shadow_map()
             self.draw()
 
             self.clock.tick(165)
             pygame.display.flip()
+
+    def load_scene(self, path):
+        with open(path, "r") as scene:
+            scene_data = yaml.safe_load(scene)
+
+            materials = {}
+
+            # fetch materials
+            for material_name in scene_data["Materials"]:
+                material_data = scene_data["Materials"][material_name]
+                
+                texture_data = material_data["textures"]
+
+                mat = Material()
+                mat.name = material_name
+
+                mat.shader = lit_shader
+
+                for tex_name, tex_path in texture_data.items():
+                    tex = Texture(tex_path)
+                    mat.add_texture(tex, tex_name)
+
+                materials[material_name] = mat
+                    
+
+            # fetch meshes
+            for mesh_name in scene_data["Meshes"]:
+                mesh_data = scene_data["Meshes"][mesh_name]
+                
+                mesh = blender.load_mesh(mesh_data["path"])
+                mesh.name = mesh_name
+                
+                mat_name = mesh_data["material"]
+                mesh.set_material(materials[mat_name])
+
+                mesh.transform.position = mesh_data["position"]
+
+                rotX, rotY, rotZ = mesh_data["rotation"]
+                mesh.transform.rotation = Quaternion.FromEuler(rotX, rotY, rotZ)
+
+                mesh.transform.scale = mesh_data["scale"]
+
+                recalculate_normals = mesh_data["recalculateNormals"]
+                if recalculate_normals:
+                    mesh.recalculate_normals()
+
+                self.meshes.append(mesh)
+                
 
 def current_time():
     return time.time() - start_time
@@ -183,34 +275,44 @@ def current_time():
 
 scene = Scene()
 
+shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
 lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
+
+"""
 unlit_shader = Shader.Shader("shaders/unlit/vertex.glsl", "shaders/unlit/fragment.glsl")
+shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
+debug_shader = Shader.Shader("shaders/debug/debug_quad_vs.glsl", "shaders/debug/debug_quad_fs.glsl")
 
-texture = Texture("textures/checkerboard.png")
+texture = Texture("textures/senya2.jpg")
+cat_texture = Texture("textures/cat.jpg")
 
-material = Material(lit_shader)
-material.add_texture(texture)
+material = Material()
+material.add_texture(texture, "_MainTex")
+
+cat_material = Material()
+cat_material.tiling = np.array([1, 1])
+cat_material.add_texture(cat_texture, "_MainTex")
 
 monkey_mesh = blender.load_mesh("models/monkey/monkey.obj")
 monkey_mesh.recalculate_normals()
 monkey_mesh.set_material(material)
+monkey_mesh.transform.translate(0, 2, 0)
 
 floor_mesh = blender.load_mesh("models/floor/floor.obj")
-floor_mesh.recalculate_normals()
-floor_mesh.set_material(material)
+#floor_mesh.recalculate_normals()
+#floor_mesh.transform.scaleAllMult(20)
+floor_mesh.set_material(cat_material)
 
 scene.add_mesh(monkey_mesh)
 scene.add_mesh(floor_mesh)
-
-#floor_mesh = blender.load_mesh("models/floor/floor.obj")
-#floor_mesh.recalculate_normals()
-#scene.add_mesh(floor_mesh)
 
 #torus_mesh = blender.load_mesh("models/torus/torus.obj")
 #torus_mesh.recalculate_normals()
 #scene.add_mesh(torus_mesh)
 
 #car_mesh = blender.load_mesh('models/car/audi r8.obj')
-#scene.add_mesh(car_mesh)
+#scene.add_mesh(car_mesh)"""
+
+scene.load_scene("scene.yaml")
 
 scene.run()

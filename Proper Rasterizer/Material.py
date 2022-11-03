@@ -1,4 +1,5 @@
 import numpy as np
+from OpenGL.GL import *
 
 class FaceTypes:
     CULL_BACK = 0
@@ -6,7 +7,7 @@ class FaceTypes:
     DOUBLE_SIDED = 2
 
 class Material:
-    def __init__(self, shader):
+    def __init__(self):
         # ambient
         self.Ka = np.array([0.2, 0.2, 0.2])
         # diffuse
@@ -22,19 +23,29 @@ class Material:
         # illumination
         self.illum = 2
         
-        self.textures = []
-        self.shader = shader
+        self.textures = {}
 
         self.face_type = FaceTypes.CULL_BACK
 
-    def add_texture(self, tex):
-        self.textures.append(tex)
+        self.tiling = np.array([1,1])
 
-    def use(self):
-        for (index, tex) in enumerate(self.textures):
-            tex.use(index)
+        self.name = "default"
+
+    def add_texture(self, tex, name):
+        self.textures[name] = tex
+
+    def use(self, shader):
+        shader.use()
+
+        # enumerate over all the textures, with index and name
+        for index, name in enumerate(self.textures):
+            texture = self.textures[name]
+            texture.use(index+1) # 0 = shadow map so we start at 1
+            glUniform1i(shader.get_keyword(name), 1)
+
+        # material uniforms
+        glUniform2fv(shader.get_keyword("tiling"), 1, self.tiling)
         
-        self.shader.use()
 
     def print(self):
         print(f"Ka: {self.Ka}")

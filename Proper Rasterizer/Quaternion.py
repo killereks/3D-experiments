@@ -69,15 +69,15 @@ class Quaternion:
 
         :return: the Euler angles in degrees
         """
-        x = np.arctan2(2 * self.y * self.w - 2 * self.x * self.z, 1 - 2 * self.y ** 2 - 2 * self.z ** 2)
-        y = np.arcsin(2 * self.x * self.y + 2 * self.z * self.w)
-        z = np.arctan2(2 * self.x * self.w - 2 * self.y * self.z, 1 - 2 * self.x ** 2 - 2 * self.z ** 2)
+        x = np.arctan2(2 * (self.w * self.x + self.y * self.z), 1 - 2 * (self.x ** 2 + self.y ** 2))
+        y = np.arcsin(2 * (self.w * self.y - self.z * self.x))
+        z = np.arctan2(2 * (self.w * self.z + self.x * self.y), 1 - 2 * (self.y ** 2 + self.z ** 2))
 
         x = np.degrees(x)
         y = np.degrees(y)
         z = np.degrees(z)
 
-        return np.array([x, y, z])
+        return np.array([x, y, z],"f")
 
     @staticmethod
     def identity():
@@ -100,6 +100,14 @@ class Quaternion:
 
     @staticmethod
     def FromEuler(x, y, z):
+        """
+        Convert Euler angles to a quaternion
+        :param x: the x angle in degrees
+        :param y: the y angle in degrees
+        :param z: the z angle in degrees
+        :return: the quaternion
+        """
+
         t0 = np.cos(np.radians(z) * 0.5)
         t1 = np.sin(np.radians(z) * 0.5)
         t2 = np.cos(np.radians(x) * 0.5)

@@ -1,0 +1,25 @@
+Materials:
+  mat0:
+    textures:
+      _MainTex: textures/cat.jpg
+
+  mat1:
+    textures:
+      _MainTex: textures/checkerboard.png
+
+Meshes:
+  model0:
+    path: models/monkey/monkey.obj
+    material: mat0
+    position: [0, 2, 0]
+    rotation: [0, 0, 0]
+    scale: [1, 1, 1]
+    recalculateNormals: false
+  model1:
+    path: models/quad/quad.obj
+    material: mat1
+    position: [0, 0, 0]
+    rotation: [0, 0, 0]
+    scale: [10, 10, 10]
+    recalculateNormals: true
+
