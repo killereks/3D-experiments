@@ -22,6 +22,7 @@ from Camera import Camera
 from Quaternion import Quaternion
 from Light import *
 from Mesh import Mesh
+from Skybox import Skybox
 
 import yaml
 
@@ -56,6 +57,8 @@ class Scene:
 
         self.sun = Light(np.array([1,1,1],"f"),1)
         self.sun.transform.translate(5, 10, 0)
+
+        self.skybox = Skybox()
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
@@ -208,6 +211,7 @@ class Scene:
                 self.camera.transform.position -= self.camera.up() * speed
 
             self.update(dt)
+            self.skybox.draw(skybox_shader, self.camera)
             self.shadow_map()
             self.draw()
 
@@ -274,6 +278,7 @@ scene = Scene()
 
 shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
 lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
+skybox_shader = Shader.Shader("shaders/skybox/vertex.glsl", "shaders/skybox/fragment.glsl")
 
 scene.load_scene("scene.yaml")
 

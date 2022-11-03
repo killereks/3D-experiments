@@ -24,7 +24,7 @@ class Camera:
         self.rotY += y
 
         # clamp rotX to -89 to 89 degrees
-        self.rotX = np.min([np.max([self.rotX, -89]), 89])
+        self.rotX = np.min([np.max([self.rotX, -90]), 90])
 
 
     def getProjectionMatrix(self):
@@ -58,13 +58,42 @@ class Camera:
         ])
 
     def forward(self):
-        return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([0,0,1]))
+        rx = np.deg2rad(self.rotX)
+        ry = -np.deg2rad(self.rotY)
+        rz = np.deg2rad(0)
+        
+        x = np.sin(ry)
+        y = np.sin(rx)
+        z = np.cos(ry)
+
+        return np.array([x, y, z])
+        #return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([0,0,1]))
 
     def right(self):
-        return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([1,0,0]))
+        rx = np.deg2rad(self.rotX)
+        ry = -np.deg2rad(self.rotY)
+        rz = np.deg2rad(0)
+
+        x = np.cos(ry)
+        y = 0
+        z = -np.sin(ry)
+
+        return np.array([x, y, z])
+
+        #return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([1,0,0]))
 
     def up(self):
-        return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([0,1,0]))
+        rx = -np.deg2rad(self.rotX)
+        ry = -np.deg2rad(self.rotY)
+        rz = np.deg2rad(0)
+
+        x = np.sin(ry) * np.sin(rx)
+        y = np.cos(-rx)
+        z = np.cos(ry) * np.sin(rx)
+
+        return np.array([x, y, z])
+
+        #return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([0,1,0]))
 
 
     def getViewMatrix(self):

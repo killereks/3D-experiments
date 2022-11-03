@@ -40,7 +40,7 @@ class Material:
         # enumerate over all the textures, with index and name
         for index, name in enumerate(self.textures):
             texture = self.textures[name]
-            texture.use(index+1) # 0 = shadow map so we start at 1
+            texture.use(index+1) # 0 = shadow map
             glUniform1i(shader.get_keyword(name), index+1)
 
         # material uniforms

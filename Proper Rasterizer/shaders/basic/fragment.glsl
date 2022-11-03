@@ -21,8 +21,6 @@ uniform vec2 tiling = vec2(10.0, 10.0);
 uniform vec3 lightPos;
 uniform vec3 viewDir;
 
-const float M_PI = 3.1415926535897932384626433832795;
-
 float shadowCalc(float dotLightNormal, vec2 offset){
     float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
     vec3 pos = FragPosLightSpace.xyz * 0.5 + 0.5;
@@ -55,6 +53,11 @@ void main(){
     float lightDot = max(0.0, dot(Normal, normalize(lightPos - Position)));
     
     vec3 outColor = albedo * softShadows(lightDot) * lightDot;
+    
+    // Skybox
+    vec3 I = normalize(viewDir);
+    vec3 N = normalize(Normal);
+    vec3 R = reflect(I, N);
 
     color = vec4(outColor, 1.0);
 }
