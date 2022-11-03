@@ -141,6 +141,11 @@ class Scene:
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glUniform1i(shader.get_keyword("shadowMap"), 0)
 
+        glActiveTexture(GL_TEXTURE10)
+        glBindTexture(GL_TEXTURE_CUBE_MAP, self.skybox.cubeMap)
+        glUniform1i(shader.get_keyword("_Skybox"), 10)
+
+
         glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
 
         mesh.material.use(shader)

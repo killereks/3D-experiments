@@ -6,7 +6,7 @@ in vec2 TexCoords;
 
 in vec4 FragPosLightSpace;
 
-out vec4 color;
+out vec4 FragColor;
 
 uniform float time;
 
@@ -14,12 +14,26 @@ uniform sampler2D _MainTex;
 uniform sampler2D _NormalMap;
 uniform sampler2D _RoughnessMap;
 
+uniform samplerCube _Skybox;
+
 uniform sampler2D shadowMap;
 
 uniform vec2 tiling = vec2(10.0, 10.0);
 
 uniform vec3 lightPos;
 uniform vec3 viewDir;
+
+// material properties
+uniform vec3 Ka;
+uniform vec3 Kd;
+uniform vec3 Ks;
+
+uniform float Ns;
+uniform float Ni;
+uniform float d;
+uniform int illum;
+
+const float M_PI = 3.1415926535897932384626433832795;
 
 float shadowCalc(float dotLightNormal, vec2 offset){
     float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
@@ -48,16 +62,10 @@ void main(){
     vec3 albedo = texture(_MainTex, TexCoords * tiling).rgb;
     vec3 normal = texture(_NormalMap, TexCoords * tiling).rgb;
     float roughness = texture(_RoughnessMap, TexCoords * tiling).r;
-    float metalness = 0.0;
-
-    float lightDot = max(0.0, dot(Normal, normalize(lightPos - Position)));
     
-    vec3 outColor = albedo * softShadows(lightDot) * lightDot;
-    
-    // Skybox
-    vec3 I = normalize(viewDir);
-    vec3 N = normalize(Normal);
-    vec3 R = reflect(I, N);
+    vec3 lightDir = normalize(lightPos - Position);
+    float NdotL = max(dot(Normal, lightDir), 0.0);
+    vec3 color = albedo * softShadows(NdotL) * NdotL;
 
-    color = vec4(outColor, 1.0);
+    FragColor = vec4(color, 1.0);
 }

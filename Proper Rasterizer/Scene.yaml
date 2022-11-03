@@ -10,6 +10,11 @@ Materials:
       _NormalMap: textures/Marble/Normal.jpg
       _RoughnessMap: textures/Marble/Roughness.jpg
     tiling: [1,1]
+  
+  mat2:
+    textures:
+      _MainTex: textures/cat.jpg
+    tiling: [1,1]
 
 Meshes:
   model0:
@@ -26,4 +31,10 @@ Meshes:
     rotation: [0, 0, 0]
     scale: [10, 10, 10]
     recalculateNormals: true
-
+  model2:
+    path: models/monkey/monkey.obj
+    material: mat0
+    position: [2, 4, 0]
+    rotation: [0, 0, 0]
+    scale: [1, 1, 1]
+    recalculateNormals: true

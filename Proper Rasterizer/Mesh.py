@@ -104,17 +104,6 @@ class Mesh:
         glBindBuffer(GL_ARRAY_BUFFER, self.tbo)
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, None)
 
-        # feed buffer data into attribute variables
-
-        """glEnableVertexAttribArray(0)
-        glVertexAttribPointer(index=0, size=self.vertices.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
-
-        glEnableVertexAttribArray(1)
-        glVertexAttribPointer(index=1, size=self.normals.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)
-
-        glEnableVertexAttribArray(2)
-        glVertexAttribPointer(index=2, size=self.uvs.shape[1], type=GL_FLOAT, normalized=False, stride=0, pointer=None)"""
-
         glDrawElements(GL_TRIANGLES, self.faces.size, GL_UNSIGNED_INT, None)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)

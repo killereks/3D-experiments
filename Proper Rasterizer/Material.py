@@ -45,6 +45,15 @@ class Material:
 
         # material uniforms
         glUniform2fv(shader.get_keyword("tiling"), 1, self.tiling)
+
+        glUniform3fv(shader.get_keyword("Ka"), 1, self.Ka)
+        glUniform3fv(shader.get_keyword("Kd"), 1, self.Kd)
+        glUniform3fv(shader.get_keyword("Ks"), 1, self.Ks)
+        
+        glUniform1f(shader.get_keyword("Ns"), self.Ns)
+        glUniform1f(shader.get_keyword("Ni"), self.Ni)
+        glUniform1f(shader.get_keyword("d"), self.d)
+        glUniform1i(shader.get_keyword("illum"), self.illum)
         
 
     def print(self):
