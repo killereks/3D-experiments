@@ -2,6 +2,8 @@ from Mesh import Mesh
 
 from OpenGL.GL import *
 
+import time
+
 class PostProcessing:
     def __init__(self, shader, width, height):
         # list of shaders to apply one by one
@@ -14,7 +16,11 @@ class PostProcessing:
         self.texture = glGenTextures(1)
         self.rbo = glGenRenderbuffers(1)
 
+        self.cameraDepthMap = glGenTextures(1)
+
         self.shadow_map = None
+        self.sun = None
+        self.camera = None
 
         self.quad = Mesh.CreateScreenQuad()
 
@@ -34,6 +40,13 @@ class PostProcessing:
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, self.width, self.height)
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, self.rbo)
 
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.width, self.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
 
     def draw(self):
         self.shader.use()
@@ -43,17 +56,35 @@ class PostProcessing:
 
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D, self.shadow_map)
+        
+        # self.rbo contains the z depth buffer
+        # copy rbo framebuffer depth values into the depth map texture
+        glActiveTexture(GL_TEXTURE2)
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
 
         glUniform1i(self.shader.get_keyword("screenTexture"), 0)
         glUniform1i(self.shader.get_keyword("shadowMap"), 1)
+        glUniform1i(self.shader.get_keyword("cameraDepthMap"), 2)
+        
+        glUniform3fv(self.shader.get_keyword("lightPos"), 1, self.sun.transform.position)
+        glUniform3fv(self.shader.get_keyword("lightDir"), 1, self.sun.transform.forward())
+
+        glUniform3fv(self.shader.get_keyword("camPos"), 1, self.camera.transform.position)
+        glUniform3fv(self.shader.get_keyword("camFwd"), 1, self.camera.transform.forward())
+        glUniform3fv(self.shader.get_keyword("camUp"), 1, self.camera.transform.up())
+        glUniform3fv(self.shader.get_keyword("camRight"), 1, self.camera.transform.right())
+
+        glUniform1f(self.shader.get_keyword("time"), time.time())
 
         self.quad.draw()
 
-    def before_draw(self, shadow_map):
+    def before_draw(self, shadow_map, sun, camera):
         """
         Draw the scene to the texture
         """
         self.shadow_map = shadow_map
+        self.sun = sun
+        self.camera = camera
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

@@ -1,9 +1,11 @@
 from Transform import Transform
 import numpy as np
 
+from Shader import Shader
+
 from custom_logging import LOG
 
-from Quaternion import Quaternion
+from OpenGL.GL import *
 
 class Camera:
     def __init__(self, fov: float, aspect: float, near: float, far: float):

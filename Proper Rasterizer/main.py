@@ -52,6 +52,9 @@ class Scene:
         self.depthMapFBO = glGenFramebuffers(1)
         self.depthMap = glGenTextures(1)
 
+        self.cameraDepthMapFBO = glGenFramebuffers(1)
+        self.cameraDepthMap = glGenTextures(1)
+
         self.shadow_map_size = 2048
 
         self.sun = Light(np.array([1,1,1],"f"),1)
@@ -65,6 +68,45 @@ class Scene:
         glCullFace(GL_BACK)
 
         glClearColor(0.1, 0.2, 0.3, 1.0)
+
+        # initialize shadow map
+        self.initialize_shadow_map()
+        self.initialize_camera_depth_map()
+        
+
+    def initialize_shadow_map(self):
+        """
+        Initializes the shadow map texture and framebuffer.
+        """
+        glBindTexture(GL_TEXTURE_2D, self.depthMap)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_size, self.shadow_map_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.depthMap, 0)
+        glDrawBuffer(GL_NONE)
+        glReadBuffer(GL_NONE)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def initialize_camera_depth_map(self):
+        """
+        Initializes the camera depth map texture and framebuffer.
+        """
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.width, self.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.cameraDepthMap, 0)
+        glDrawBuffer(GL_NONE)
+        glReadBuffer(GL_NONE)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 
     def add_mesh(self, mesh: Mesh):
@@ -97,17 +139,7 @@ class Scene:
         This is used to determine which fragments are in shadow.
         """
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_size, self.shadow_map_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-
         glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.depthMap, 0)
-        glDrawBuffer(GL_NONE)
-        glReadBuffer(GL_NONE)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         lightProjection = self.sun.getLightProjection()
         lightView = self.sun.getLightView()
@@ -160,6 +192,10 @@ class Scene:
         glBindTexture(GL_TEXTURE_CUBE_MAP, self.skybox.cubeMap)
         glUniform1i(shader.get_keyword("_Skybox"), 10)
 
+        glActiveTexture(GL_TEXTURE11)
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
+        glUniform1i(shader.get_keyword("cameraDepthMap"), 11)
+
         # camera forward
         glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
 
@@ -193,6 +229,26 @@ class Scene:
         for mesh in self.meshes:
             mesh.update(dt)
 
+    def camera_depth(self):
+        """
+        Renders the depth of the scene from the camera's perspective.
+        This is used for post processing effects.
+        """
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
+
+        camera_depth_shader.use()
+        glUniformMatrix4fv(camera_depth_shader.get_keyword("view"), 1, GL_TRUE, self.camera.transform.getTRSMatrix())
+        glUniformMatrix4fv(camera_depth_shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
+
+        glViewport(0, 0, self.width, self.height)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
+        glClear(GL_DEPTH_BUFFER_BIT)
+
+        self.draw_scene(camera_depth_shader)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
 
     def run(self):
         """
@@ -221,10 +277,12 @@ class Scene:
 
             # MAIN DRAW LOOP
             self.skybox.draw(skybox_shader, self.camera)
+            #self.camera_depth()
             self.shadow_map()
 
+            # draw scene with post processing
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self.postprocessing.before_draw(self.depthMap)
+            self.postprocessing.before_draw(self.depthMap, self.sun, self.camera)
             glViewport(0, 0, self.width, self.height)
             self.draw_scene(lit_shader)
             self.postprocessing.after_draw()
@@ -350,6 +408,7 @@ shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shad
 lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
 skybox_shader = Shader.Shader("shaders/skybox/vertex.glsl", "shaders/skybox/fragment.glsl")
 postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/postprocess/fragment.glsl")
+camera_depth_shader = Shader.Shader("shaders/camera/camera_depth_vertex.glsl", "shaders/camera/camera_depth_fragment.glsl")
 
 scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 
