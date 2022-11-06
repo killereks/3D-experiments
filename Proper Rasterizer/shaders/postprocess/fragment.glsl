@@ -12,11 +12,15 @@ uniform vec3 camFwd;
 uniform vec3 camUp;
 uniform vec3 camRight;
 
+uniform mat4 projection;
+uniform mat4 view;
+
 uniform float time;
 
 in vec2 Position;
+in vec4 FragPosLightSpace;
 
-out vec4 color;
+out vec4 FragColor;
 
 float lineariseDepth(float depth){
     float near = 0.1;
@@ -24,8 +28,55 @@ float lineariseDepth(float depth){
     return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
 }
 
+vec3 getWorldPosition(vec2 TexCoord){
+    float depth = texture(cameraDepthMap, TexCoord).r;
+
+    float z = depth * 2.0 - 1.0;
+
+    vec4 clipSpacePosition = vec4(TexCoord * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = inverse(projection) * clipSpacePosition;
+
+    viewSpacePosition /= viewSpacePosition.w;
+
+    vec4 worldSpacePosition = inverse(view) * viewSpacePosition;
+
+    return worldSpacePosition.xyz;
+}
+
+float inShadow(){
+    float bias = 0.005;
+    vec3 pos = FragPosLightSpace.xyz * 0.5 + 0.5;
+    float depth = texture(shadowMap, pos.xy).r;
+    return depth + bias < pos.z ? 0.0 : 1.0;
+}
+
+vec3 ACES(vec3 colorInput){
+    mat3x3 rgb2aces = mat3x3(
+        1.0498110175, 0.0000000000, -0.0000974845,
+        -0.4959030231, 1.3733130458, 0.0982400361,
+        0.0000000000, 0.0000000000, 0.9912520182
+    );
+
+    return colorInput * rgb2aces;
+}
+
+vec3 Vignette(vec3 colorInput, vec2 uv){
+    float vignette = 0.5;
+    float vignetteRadius = 0.5;
+    float vignetteSoftness = 0.5;
+
+    vec2 vignetteCenter = vec2(0.5, 0.5);
+    vec2 vignetteDelta = uv - vignetteCenter;
+    float vignetteDistance = length(vignetteDelta);
+    float vignetteIntensity = smoothstep(vignetteRadius, vignetteRadius + vignetteSoftness, vignetteDistance);
+    vignetteIntensity = 1.0 - vignetteIntensity * vignette;
+
+    return colorInput * vignetteIntensity;
+}
+
 void main(){
     vec2 TexCoords = Position * 0.5 + 0.5;
+    vec3 albedo = texture(screenTexture, TexCoords).rgb;
     //color = texture(screenTexture, TexCoords);
 
     //float lum = 
@@ -48,39 +99,10 @@ void main(){
     
     // volumetric lighting
     
-    /*float intensity = 0.0;
-    float radius = 0.1;
-    float amount = 0.1;
-    float decay = 0.9;
-    float density = 0.9;
-    float weight = 0.0;
-    float illuminationDecay = 1.0;
-    vec3 lightVector = normalize(lightPos - camPos);
-    vec3 sampleRay = lightVector;
-    vec3 samplePos = camPos;
-    for(int i = 0; i < 100; i++){
-        float depth = texture(shadowMap, samplePos.xy).r;
-        float illumination = 1.0 - smoothstep(0.0, 1.0, depth - samplePos.z);
-        illumination *= illuminationDecay;
-        illuminationDecay *= decay;
-        weight += (density * illumination);
-        samplePos += sampleRay * radius;
-    }
-    intensity = weight * amount;
+    vec3 color = albedo;
+    color = ACES(color);
 
-    vec3 pixelColor = texture(screenTexture, TexCoords).rgb;
-    color = vec4(pixelColor + intensity, 1.0);*/
+    color = Vignette(color, TexCoords);
 
-    float depth = lineariseDepth(texture(cameraDepthMap, TexCoords).r);
-    
-    // apply fog based on depth
-    float fogAmount = 0.1;
-    float fogDensity = 0.1;
-    float fog = 1.0 - exp(-depth * fogDensity);
-    fog = clamp(fog, 0.0, 1.0);
-    fog = smoothstep(0.0, 1.0, fog);
-    fog = fog * fogAmount;
-
-    vec3 albedo = texture(screenTexture, TexCoords).rgb;
-    color = vec4(albedo + fog, 1.0);
+    FragColor = vec4(color, 1.0);
 }

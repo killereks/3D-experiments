@@ -16,7 +16,7 @@ class PostProcessing:
         self.texture = glGenTextures(1)
         self.rbo = glGenRenderbuffers(1)
 
-        self.cameraDepthMap = glGenTextures(1)
+        self.cameraDepthMap = 0
 
         self.shadow_map = None
         self.sun = None
@@ -40,13 +40,6 @@ class PostProcessing:
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, self.width, self.height)
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, self.rbo)
 
-        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.width, self.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-
 
     def draw(self):
         self.shader.use()
@@ -69,6 +62,8 @@ class PostProcessing:
         glUniform3fv(self.shader.get_keyword("lightPos"), 1, self.sun.transform.position)
         glUniform3fv(self.shader.get_keyword("lightDir"), 1, self.sun.transform.forward())
 
+        glUniformMatrix4fv(self.shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightView())
+
         glUniform3fv(self.shader.get_keyword("camPos"), 1, self.camera.transform.position)
         glUniform3fv(self.shader.get_keyword("camFwd"), 1, self.camera.transform.forward())
         glUniform3fv(self.shader.get_keyword("camUp"), 1, self.camera.transform.up())
@@ -78,13 +73,14 @@ class PostProcessing:
 
         self.quad.draw()
 
-    def before_draw(self, shadow_map, sun, camera):
+    def before_draw(self, shadow_map, sun, camera, cameraDepthMap):
         """
         Draw the scene to the texture
         """
         self.shadow_map = shadow_map
         self.sun = sun
         self.camera = camera
+        self.cameraDepthMap = cameraDepthMap
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

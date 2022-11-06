@@ -47,7 +47,7 @@ class Scene:
         aspect = self.width / self.height
 
         self.camera = Camera(80, aspect, 0.1, 100)
-        self.camera.transform.translate(0, -2, -2)
+        self.camera.transform.translate(0, -2, -5)
 
         self.depthMapFBO = glGenFramebuffers(1)
         self.depthMap = glGenTextures(1)
@@ -55,7 +55,7 @@ class Scene:
         self.cameraDepthMapFBO = glGenFramebuffers(1)
         self.cameraDepthMap = glGenTextures(1)
 
-        self.shadow_map_size = 2048
+        self.shadow_map_size = 4096
 
         self.sun = Light(np.array([1,1,1],"f"),1)
         self.sun.transform.translate(5, 10, 0)
@@ -157,6 +157,26 @@ class Scene:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
+    def camera_depth(self):
+        """
+        Renders the depth of the scene from the camera's perspective.
+        This is used for post processing effects.
+        """
+        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
+
+        camera_depth_shader.use()
+        glUniformMatrix4fv(camera_depth_shader.get_keyword("view"), 1, GL_TRUE, self.camera.transform.getTRSMatrix())
+        glUniformMatrix4fv(camera_depth_shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
+
+        glViewport(0, 0, self.width, self.height)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
+        glClear(GL_DEPTH_BUFFER_BIT)
+
+        self.draw_scene(camera_depth_shader)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
 
     # method that supplies model, view and projection matrices to the shader
     def set_matrices(self, mesh: Mesh, shader: Shader):
@@ -224,30 +244,11 @@ class Scene:
 
         :param dt: Delta time, the time since the last frame, used to make updates framerate independent
         """
-        self.sun.transform.position = np.array([np.cos(current_time()) * 5, 10, np.sin(current_time()) * 5])
+        #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 10, np.sin(current_time()) * 10])
+        self.sun.transform.position = np.array([5, 20, 5])
 
         for mesh in self.meshes:
             mesh.update(dt)
-
-    def camera_depth(self):
-        """
-        Renders the depth of the scene from the camera's perspective.
-        This is used for post processing effects.
-        """
-        glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
-        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
-
-        camera_depth_shader.use()
-        glUniformMatrix4fv(camera_depth_shader.get_keyword("view"), 1, GL_TRUE, self.camera.transform.getTRSMatrix())
-        glUniformMatrix4fv(camera_depth_shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
-
-        glViewport(0, 0, self.width, self.height)
-        glBindFramebuffer(GL_FRAMEBUFFER, self.cameraDepthMapFBO)
-        glClear(GL_DEPTH_BUFFER_BIT)
-
-        self.draw_scene(camera_depth_shader)
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 
     def run(self):
@@ -277,12 +278,12 @@ class Scene:
 
             # MAIN DRAW LOOP
             self.skybox.draw(skybox_shader, self.camera)
-            #self.camera_depth()
             self.shadow_map()
+            self.camera_depth()
 
             # draw scene with post processing
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self.postprocessing.before_draw(self.depthMap, self.sun, self.camera)
+            self.postprocessing.before_draw(self.depthMap, self.sun, self.camera, self.cameraDepthMap)
             glViewport(0, 0, self.width, self.height)
             self.draw_scene(lit_shader)
             self.postprocessing.after_draw()
