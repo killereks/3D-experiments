@@ -1,3 +1,5 @@
+import time
+
 # enum for levels
 class LogLevel:
     DEBUG = 0
@@ -12,7 +14,14 @@ WARNING_COLOR = '\033[93m'
 ERROR_COLOR = '\033[91m'
 CRITICAL_COLOR = '\033[95m'
 
-def LOG(msg, level=0):
+def LOG(msg:str, level:float=0):
+    """
+    Logs a message to the console.
+    Helpful for debugging, as it prints it with color.
+
+    :param msg: the message to log
+    :param level: the level of the message
+    """
     levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
     # -- {label} -- {msg}
     # label is centered in a 10 character wide field
@@ -31,4 +40,8 @@ def LOG(msg, level=0):
     elif level == LogLevel.CRITICAL:
         COLOR = CRITICAL_COLOR
 
-    print(COLOR + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m')
+    timestamp = time.strftime("%H:%M:%S", time.localtime())
+
+    timestamp = "[" + timestamp + "] "
+
+    print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m')

@@ -1,6 +1,9 @@
 import numpy as np
 from OpenGL.GL import *
 
+from Texture import Texture
+from Shader import Shader
+
 class FaceTypes:
     CULL_BACK = 0
     CULL_FRONT = 1
@@ -9,13 +12,13 @@ class FaceTypes:
 class Material:
     def __init__(self):
         # ambient
-        self.Ka = np.array([0.2, 0.2, 0.2])
+        self.Ka = 0.2
         # diffuse
-        self.Kd = np.array([0.8, 0.8, 0.8])
+        self.Kd = 0.8
         # specular
-        self.Ks = np.array([1.0, 1.0, 1.0])
+        self.Ks = 1
         # specular exponent
-        self.Ns = 0.0
+        self.Ns = 10.0
         # optical density
         self.Ni = 1.0
         # dissolve
@@ -31,10 +34,21 @@ class Material:
 
         self.name = "default"
 
-    def add_texture(self, tex, name):
+    def add_texture(self, tex: Texture, name: str):
+        """
+        Add a texture to the material
+        
+        :param tex: the texture to add
+        :param name: the name of the texture, used in the shader
+        """
         self.textures[name] = tex
 
-    def use(self, shader):
+    def use(self, shader: Shader):
+        """
+        Use the material in the shader
+        
+        :param shader: the shader to use for this material
+        """
         shader.use()
 
         # enumerate over all the textures, with index and name
@@ -46,9 +60,9 @@ class Material:
         # material uniforms
         glUniform2fv(shader.get_keyword("tiling"), 1, self.tiling)
 
-        glUniform3fv(shader.get_keyword("Ka"), 1, self.Ka)
-        glUniform3fv(shader.get_keyword("Kd"), 1, self.Kd)
-        glUniform3fv(shader.get_keyword("Ks"), 1, self.Ks)
+        glUniform1f(shader.get_keyword("Ka"), self.Ka)
+        glUniform1f(shader.get_keyword("Kd"), self.Kd)
+        glUniform1f(shader.get_keyword("Ks"), self.Ks)
         
         glUniform1f(shader.get_keyword("Ns"), self.Ns)
         glUniform1f(shader.get_keyword("Ni"), self.Ni)

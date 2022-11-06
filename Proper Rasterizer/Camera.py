@@ -6,7 +6,7 @@ from custom_logging import LOG
 from Quaternion import Quaternion
 
 class Camera:
-    def __init__(self, fov, aspect, near, far):
+    def __init__(self, fov: float, aspect: float, near: float, far: float):
         self.transform = Transform()
         self.fov = fov
         self.near = near
@@ -19,17 +19,25 @@ class Camera:
         self.rotX = 0
         self.rotY = 0
 
-    def rotate_local(self, x, y):
+    def rotate_local(self, x: float, y: float):
+        """
+        Rotates the camera by the given amount.
+
+        We don't want to use Quaternions here because we want to rotate the camera around the local axes.
+
+        :param x: the amount to rotate on the x axis
+        :param y: the amount to rotate on the y axis
+        """
         self.rotX += x
         self.rotY += y
 
-        # clamp rotX to -89 to 89 degrees
+        # clamp rotX to -90 and 90
         self.rotX = np.min([np.max([self.rotX, -90]), 90])
 
 
     def getProjectionMatrix(self):
         '''
-        Returns a projection matrix for the camera.
+        Calculates the projection matrix for the camera.
         :return: the 4x4 projection matrix
         '''
         
@@ -49,7 +57,17 @@ class Camera:
         ])
 
     @staticmethod
-    def getOrthographicMatrix(left, right, bottom, top, near, far):
+    def getOrthographicMatrix(left: float, right: float, bottom: float, top: float, near: float, far: float):
+        """
+        Returns an orthographic projection matrix.
+        :param left: the left plane
+        :param right: the right plane
+        :param bottom: the bottom plane
+        :param top: the top plane
+        :param near: the near plane
+        :param far: the far plane
+        """
+
         return np.array([
             [2 / (right - left), 0, 0, -(right + left) / (right - left)],
             [0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)],
@@ -58,6 +76,11 @@ class Camera:
         ])
 
     def forward(self):
+        """
+        Returns the forward vector of the camera.
+        
+        :return: the forward vector
+        """
         rx = np.deg2rad(self.rotX)
         ry = -np.deg2rad(self.rotY)
         rz = np.deg2rad(0)
@@ -70,6 +93,11 @@ class Camera:
         #return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([0,0,1]))
 
     def right(self):
+        """
+        Returns the right vector of the camera.
+
+        :return: the right vector
+        """
         rx = np.deg2rad(self.rotX)
         ry = -np.deg2rad(self.rotY)
         rz = np.deg2rad(0)
@@ -83,6 +111,12 @@ class Camera:
         #return Quaternion.MultiplyVector(Quaternion.FromEuler(-self.rotX, -self.rotY, 0), np.array([1,0,0]))
 
     def up(self):
+        """
+        Returns the up vector of the camera.
+
+        :return: the up vector
+        """
+
         rx = -np.deg2rad(self.rotX)
         ry = -np.deg2rad(self.rotY)
         rz = np.deg2rad(0)
@@ -99,6 +133,7 @@ class Camera:
     def getViewMatrix(self):
         '''
         Returns a view matrix for the camera.
+
         :return: the 4x4 view matrix
         '''
         #R = self.transform.rotation.ToMatrix()
@@ -115,6 +150,11 @@ class Camera:
     def lookAt(pos, target, up):
         '''
         Returns a view matrix for the camera.
+        
+        :param pos: the position of the camera
+        :param target: the target of the camera (where it's looking)
+        :param up: the up vector of the camera (usually [0,1,0])
+
         :return: the 4x4 view matrix
         '''
         

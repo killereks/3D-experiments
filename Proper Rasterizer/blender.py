@@ -3,11 +3,13 @@ from custom_logging import LOG
 
 import Mesh
 
-def load_obj_file(file_name):
-	'''
-	Function for loading a Blender3D object file. minimalistic, and partial,
-	but sufficient for this course. You do not really need to worry about it.
-	'''
+def load_obj_file(file_name: str):
+	"""
+	Loads an obj file and returns the vertices, faces, normals and texture coordinates
+
+	:param file_name: The path to the obj file
+	:return: A tuple of vertices, faces, normals and texture coordinates
+	"""
 	
 	LOG(f"Attemping to load {file_name}")
 	
@@ -65,7 +67,13 @@ def load_obj_file(file_name):
 
 		return vertices, faces, normals, texcoords
 
-def load_mesh(file_name):
+def load_mesh(file_name: str):
+	"""
+	Loads a mesh from an obj file
+
+	:param file_name: The path to the obj file
+	:return: A Mesh object
+	"""
 	vertices, faces, normals, texcoords = load_obj_file(file_name)
 
 	return Mesh.Mesh(vertices, faces, normals, texcoords)

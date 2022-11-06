@@ -6,11 +6,10 @@ from custom_logging import LOG
 
 import numpy as np
 
-import time
-import math
+import Material
 
 class Mesh:
-    def __init__(self, vertices, faces, normals, uvs):
+    def __init__(self, vertices: np.ndarray, faces: np.ndarray, normals: np.ndarray, uvs: np.ndarray):
         self.vertices = vertices
         self.faces = faces
 
@@ -35,10 +34,19 @@ class Mesh:
 
         self.initialize()
 
-    def set_material(self, material):
+    def set_material(self, material: Material):
+        """
+        Sets the material of the mesh
+        
+        :param material: The material to set
+        """
         self.material = material
 
     def getBoundingBox(self):
+        """
+        Returns the bounding box of the mesh, i.e. smallest box that contains the mesh
+        
+        :return: The bounding box of the mesh"""
         min = [0, 0, 0]
         max = [0, 0, 0]
 
@@ -52,6 +60,9 @@ class Mesh:
         return [min, max]
 
     def recalculate_normals(self):
+        """
+        Recalculates the normals of the mesh and updates the VBO
+        """
         self.normals = np.zeros(self.vertices.shape, dtype="f")
         
         for f in range(self.faces.shape[0]):
@@ -69,6 +80,9 @@ class Mesh:
         self.initialize()
 
     def initialize(self):
+        """
+        Initializes the mesh, i.e. uploads the data to the GPU
+        """
         glEnableClientState(GL_VERTEX_ARRAY)
 
         # vertex positions
@@ -88,6 +102,9 @@ class Mesh:
         glBufferData(GL_ARRAY_BUFFER, self.uvs, GL_STATIC_DRAW)
 
     def draw(self):
+        """
+        Draws the mesh using the currently bound shader
+        """
         glEnableClientState(GL_VERTEX_ARRAY)
 
         glEnableVertexAttribArray(0)
@@ -114,6 +131,49 @@ class Mesh:
         glDisableVertexAttribArray(2)
 
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """
+        Updates the mesh position, rotation and scale
+        """
+
         pass
         #self.transform.rotateAxis([0, 1, 0], dt * 5)
+
+    @staticmethod
+    def CreateScreenQuad():
+        """
+        Creates a quad mesh that fills the entire screen
+        """
+        vertices = np.array([
+            [-1, -1, 0],
+            [1, -1, 0],
+            [1, 1, 0],
+            [-1, 1, 0]
+        ], dtype="f")
+
+        faces = np.array([
+            [0, 1, 2],
+            [0, 2, 3]
+        ], dtype="i")
+
+        normals = np.array([
+            [0, 0, 1],
+            [0, 0, 1],
+            [0, 0, 1],
+            [0, 0, 1]
+        ], dtype="f")
+        
+        uvs = np.array([
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1]
+        ], dtype="f")
+
+        mesh = Mesh(vertices, faces, normals, uvs)
+        mesh.name = "ScreenQuad"
+
+        return mesh
+
+        
+        

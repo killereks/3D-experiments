@@ -13,16 +13,15 @@ import numpy as np
 import time
 
 import blender
-from MaterialLibrary import MaterialLibrary
 import Shader
 from Material import Material, FaceTypes
 from Texture import Texture
-from Transform import Transform
 from Camera import Camera
 from Quaternion import Quaternion
 from Light import *
 from Mesh import Mesh
 from Skybox import Skybox
+from PostProcessing import PostProcessing
 
 import yaml
 
@@ -68,18 +67,23 @@ class Scene:
         glClearColor(0.1, 0.2, 0.3, 1.0)
 
 
-    def add_mesh(self, mesh):
+    def add_mesh(self, mesh: Mesh):
+        """
+        Adds a mesh to the scene
+
+        :param mesh: The mesh instance to add
+        """
         self.meshes.append(mesh)
 
-    def draw(self):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glViewport(0, 0, self.width, self.height)
+    def draw_scene(self, shader: Shader):
+        """
+        Draws the scene using the given shader.
+        Shader needs to have a model, view and projection matrix uniform.
+
+        This is used for the shadow map pass and the main draw pass, so shader is flexible.
         
-        self.simple_draw(lit_shader)
-
-        #self.debug()
-
-    def simple_draw(self, shader):
+        :param shader: The shader to use
+        """
         shader.use()
 
         for mesh in self.meshes:
@@ -87,6 +91,11 @@ class Scene:
             mesh.draw()
 
     def shadow_map(self):
+        """
+        Renders the scene from the light's perspective to a depth map.
+        
+        This is used to determine which fragments are in shadow.
+        """
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.shadow_map_size, self.shadow_map_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -112,13 +121,19 @@ class Scene:
         glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
         glClear(GL_DEPTH_BUFFER_BIT)
         
-        self.simple_draw(shadow_map_shader)
+        self.draw_scene(shadow_map_shader)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 
     # method that supplies model, view and projection matrices to the shader
-    def set_matrices(self, mesh, shader):
+    def set_matrices(self, mesh: Mesh, shader: Shader):
+        """
+        Sets the model, view and projection matrices for the given shader.
+        
+        :param mesh: The mesh to get the model matrix from
+        :param shader: The shader to set the matrices for
+        """
         shader.use()
 
         model_matrix = mesh.transform.getTRSMatrix()
@@ -136,7 +151,7 @@ class Scene:
         lightSpaceMatrix = self.sun.getLightSpaceMatrix()
         glUniformMatrix4fv(shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, lightSpaceMatrix)
 
-        # shadow map
+        # shadow map (index 0)
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glUniform1i(shader.get_keyword("shadowMap"), 0)
@@ -145,12 +160,18 @@ class Scene:
         glBindTexture(GL_TEXTURE_CUBE_MAP, self.skybox.cubeMap)
         glUniform1i(shader.get_keyword("_Skybox"), 10)
 
-
+        # camera forward
         glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
 
         mesh.material.use(shader)
     
-    def set_face_culling(self, cull_face_type):
+    def set_face_culling(self, cull_face_type: int):
+        """
+        Sets the face culling type.
+        In most cases this should be GL_BACK, but if you want to draw the inside of a mesh, use GL_FRONT.
+        
+        :param cull_face_type: The face culling type
+        """
         if cull_face_type == FaceTypes.CULL_BACK:
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
@@ -161,7 +182,12 @@ class Scene:
             glDisable(GL_CULL_FACE)
 
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """
+        Updates the scene.
+
+        :param dt: Delta time, the time since the last frame, used to make updates framerate independent
+        """
         self.sun.transform.position = np.array([np.cos(current_time()) * 5, 10, np.sin(current_time()) * 5])
 
         for mesh in self.meshes:
@@ -169,6 +195,12 @@ class Scene:
 
 
     def run(self):
+        """
+        Main loop of the scene.
+
+        Calculates delta time, updates the scene and draws it.
+        """
+
         while self.running:
             # handle events
             for event in pygame.event.get():
@@ -176,54 +208,72 @@ class Scene:
                     LOG("Quitting...", LogLevel.CRITICAL)
                     self.running = False
 
+
             fps = self.clock.get_fps()
             dt = 1.0 if fps == 0 else 1.0 / fps
 
-            pygame.display.set_caption(f"FPS: {fps} ({dt*1000}ms)")
+            ms = dt * 1000.0
 
-            # holding keys
-            keys = pygame.key.get_pressed()
-            
-            # mouse delta
-            mouse_delta = pygame.mouse.get_rel()
+            pygame.display.set_caption(f"FPS: {fps:.2f} / {ms:.1f}ms")
 
-            # if mouse is held down
-            if pygame.mouse.get_pressed()[0]:
-                rotX = mouse_delta[0] * dt * 50
-                rotY = mouse_delta[1] * dt * 50
-                
-                self.camera.rotate_local(rotY, rotX)
-
-            #print(self.camera.transform.position, self.camera.transform.rotation)
-
-            speed = 1.0 * dt
-
-            # if holding left shift
-            if keys[pygame.K_LSHIFT]:
-                speed *= 5
-
-            if keys[pygame.K_w]:
-                self.camera.transform.position += self.camera.forward() * speed
-            if keys[pygame.K_s]:
-                self.camera.transform.position -= self.camera.forward() * speed
-            if keys[pygame.K_a]:
-                self.camera.transform.position += self.camera.right() * speed
-            if keys[pygame.K_d]:
-                self.camera.transform.position -= self.camera.right() * speed
-            if keys[pygame.K_q]:
-                self.camera.transform.position += self.camera.up() * speed
-            if keys[pygame.K_e]:
-                self.camera.transform.position -= self.camera.up() * speed
-
+            self.cameraMovement(dt)
             self.update(dt)
+
+            # MAIN DRAW LOOP
             self.skybox.draw(skybox_shader, self.camera)
             self.shadow_map()
-            self.draw()
 
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            self.postprocessing.before_draw(self.depthMap)
+            glViewport(0, 0, self.width, self.height)
+            self.draw_scene(lit_shader)
+            self.postprocessing.after_draw()
+
+            # refreshing
             self.clock.tick(165)
             pygame.display.flip()
+        
 
-    def load_scene(self, path):
+    def cameraMovement(self, dt: float):
+        # holding keys
+        keys = pygame.key.get_pressed()
+        
+        # mouse delta
+        mouse_delta = pygame.mouse.get_rel()
+
+        # if mouse is held down
+        if pygame.mouse.get_pressed()[0]:
+            rotX = mouse_delta[0] * dt * 50
+            rotY = mouse_delta[1] * dt * 50
+            
+            self.camera.rotate_local(rotY, rotX)
+
+        speed = 1.0 * dt
+
+        # if holding left shift speed up
+        if keys[pygame.K_LSHIFT]:
+            speed *= 5
+
+        if keys[pygame.K_w]:
+            self.camera.transform.position += self.camera.forward() * speed
+        if keys[pygame.K_s]:
+            self.camera.transform.position -= self.camera.forward() * speed
+        if keys[pygame.K_a]:
+            self.camera.transform.position += self.camera.right() * speed
+        if keys[pygame.K_d]:
+            self.camera.transform.position -= self.camera.right() * speed
+        if keys[pygame.K_q]:
+            self.camera.transform.position += self.camera.up() * speed
+        if keys[pygame.K_e]:
+            self.camera.transform.position -= self.camera.up() * speed
+
+    def load_scene(self, path: str):
+        """
+        Loads a scene from a file.
+        
+        :param path: The path to the scene file
+        """
+
         with open(path, "r") as scene:
             scene_data = yaml.safe_load(scene)
 
@@ -243,6 +293,14 @@ class Scene:
                 mat.tiling = tiling
 
                 mat.shader = lit_shader
+
+                mat.ambient = material_data["ambient"]
+                mat.diffuse = material_data["diffuse"]
+                mat.specular = material_data["specular"]
+                mat.specularExponent = material_data["specularExponent"]
+                mat.opticalDensity = material_data["opticalDensity"]
+                mat.dissolve = material_data["dissolve"]
+                mat.illumination = material_data["illumination"]
 
                 for tex_name, tex_path in texture_data.items():
                     tex = Texture(tex_path)
@@ -276,14 +334,24 @@ class Scene:
                 
 
 def current_time():
+    """
+    Returns the time since the program started in seconds.
+    Used for animations inside shaders.
+
+    :return: The time since the program started in seconds
+    """
     return time.time() - start_time
 
 
 scene = Scene()
 
+# initialize basic shaders
 shadow_map_shader = Shader.Shader("shaders/shadow_map/shadow_vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
 lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.glsl")
 skybox_shader = Shader.Shader("shaders/skybox/vertex.glsl", "shaders/skybox/fragment.glsl")
+postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/postprocess/fragment.glsl")
+
+scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 
 scene.load_scene("scene.yaml")
 

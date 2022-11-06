@@ -1,8 +1,8 @@
-from email import header
 import numpy as np
+import Quaternion
 
 class Quaternion:
-    def __init__(self, w, x, y, z):
+    def __init__(self, w: float, x: float, y: float, z: float):
         self.w = w
         self.x = x
         self.y = y
@@ -10,7 +10,7 @@ class Quaternion:
 
         self.Normalize()
 
-    def __mul__(self, other):
+    def __mul__(self, other: Quaternion):
         """
         Quaternion multiplication
         :param other: the other quaternion
@@ -27,7 +27,11 @@ class Quaternion:
         return Quaternion(w, x, y, z)
 
     @staticmethod
-    def Inverse(q):
+    def Inverse(q: Quaternion):
+        """
+        Inverse of a quaternion, such that q * q.Inverse() = q.Identity()
+        :param q: the quaternion to invert
+        """
         # such that q * q.Inverse() = 1
         # conjugate
         return Quaternion(q.w, -q.x, -q.y, -q.z)
@@ -81,10 +85,20 @@ class Quaternion:
 
     @staticmethod
     def identity():
+        """
+        Quaternion that represents no rotation
+        :return: the identity quaternion
+        """
         return Quaternion(1, 0, 0, 0)
 
     @staticmethod
-    def MultiplyVector(q, v):
+    def MultiplyVector(q: Quaternion, v: np.ndarray):
+        """
+        Rotate a vector by a quaternion
+        
+        :param q: the quaternion to rotate by
+        :param v: the vector to rotate
+        """
         # q * Quaternion(0, v[0], v[1], v[2]) * q.Inverse()
         
         x = q.w * v[0] + q.y * v[2] - q.z * v[1]
@@ -99,7 +113,7 @@ class Quaternion:
 
 
     @staticmethod
-    def FromEuler(x, y, z):
+    def FromEuler(x: float, y: float, z: float):
         """
         Convert Euler angles to a quaternion
         :param x: the x angle in degrees
@@ -123,7 +137,7 @@ class Quaternion:
         return Quaternion(w, x, y, z)
 
     @staticmethod
-    def FromAxisAngle(axis, angle):
+    def FromAxisAngle(axis: np.ndarray, angle: float):
         """
         Create a quaternion from an axis and an angle
         :param axis: the axis of rotation

@@ -9,24 +9,34 @@ class Transform:
         self.rotation = Quaternion.identity()
         self.scale = np.array([1., 1., 1.])
 
-    def translate(self, x, y, z):
+    def translate(self, x: float, y: float, z: float):
+        """
+        Translates the transform by the given amount.
+        """
         self.position += np.array([x, y, z])
 
-    def rotate(self, x, y, z):
+    def rotate(self, x: float, y: float, z: float):
+        """
+        Rotates the transform by the given amount, in local space.
+        """
         self.rotation *= Quaternion.FromEuler(x, y, z)
 
-    def rotateLocal(self, x, y, z):
-        self.rotateAxis(self.right(), x)
-        self.rotateAxis(self.up(), y)
-        self.rotateAxis(self.forward(), z)
-
-    def scaleAdd(self, x, y, z):
+    def scaleAdd(self, x: float, y: float, z: float):
+        """
+        Scales the transform by the given amount additively.
+        """
         self.scale += np.array([x, y, z])
 
-    def scaleAllMult(self, scale):
+    def scaleAllMult(self, scale: float):
+        """
+        Scales each axis by the given amount multiplicatively.
+        """
         self.scale *= scale
     
-    def scaleMult(self, x, y, z):
+    def scaleMult(self, x: float, y: float, z: float):
+        """
+        Scales each axis separately by the given amount multiplicatively.
+        """
         self.scale *= np.array([x, y, z])
     
     def getTRSMatrix(self):
@@ -46,46 +56,28 @@ class Transform:
         return np.matmul(T, np.matmul(R, S))
 
     def forward(self):
+        """
+        :return: the forward vector
+        """
         return Quaternion.MultiplyVector(self.rotation, np.array([0,0,1]))
     
     def right(self):
+        """
+        :return: the right vector
+        """
         return Quaternion.MultiplyVector(self.rotation, np.array([1,0,0]))
 
     def up(self):
+        """
+        :return: the up vector
+        """
         return Quaternion.MultiplyVector(self.rotation, np.array([0,1,0]))
-
-        
-    """def forward(self):
-        rotX, rotY, rotZ = self.rotation.ToEuler()
-
-        rotX = np.radians(rotX)
-        rotY = np.radians(rotY)
-        rotZ = np.radians(rotZ)
-        
-        x = np.sin(rotY) * np.cos(rotX)
-        y = np.sin(-rotX)
-        z = np.cos(rotX) * np.cos(rotY)
-
-        return np.array([x, y, z])
-
-    def right(self):
-        rotX, rotY, rotZ = self.rotation.ToEuler()
-
-        rotX = np.radians(rotX)
-        rotY = np.radians(rotY)
-        rotZ = np.radians(rotZ)
-
-        x = np.cos(rotY)
-        y = 0
-        z = -np.sin(rotY)
-
-        return np.array([x, y, z])
-
-    def up(self):
-        return np.cross(self.forward(), self.right())"""
             
 
     def getTranslationMatrix(self):
+        """
+        :return: the 4x4 translation matrix
+        """
         return np.array([
             [1, 0, 0, self.position[0]],
             [0, 1, 0, self.position[1]],
@@ -94,6 +86,9 @@ class Transform:
         ],"f")
 
     def getScaleMatrix(self):
+        """
+        :return: the 4x4 scale matrix
+        """
         return np.array([
             [self.scale[0], 0, 0, 0],
             [0, self.scale[1], 0, 0],
@@ -101,11 +96,23 @@ class Transform:
             [0, 0, 0, 1]
         ],"f")
 
-    def rotateAxis(self, vector, angle):
+    def rotateAxis(self, vector: np.ndarray, angle: float):
+        """
+        Rotates the transform by the given amount, in local space, around the given axis.
+
+        :param vector: the axis to rotate around
+        :param angle: the angle to rotate by in degrees
+        """
         self.rotation *= Quaternion.FromAxisAngle(vector, angle)
 
     @staticmethod
-    def lookAt(position, target, up):
+    def lookAt(position: np.ndarray, target: np.ndarray, up: np.ndarray):
+        """
+        Creates a view matrix for the given position, target, and up vector.
+        
+        :param position: the position of the object
+        :param target: the target look at point
+        :param up: the up vector (usually [0,1,0])"""
         zaxis = np.subtract(position, target)
         zaxis = zaxis / np.linalg.norm(zaxis)
 
@@ -123,7 +130,14 @@ class Transform:
         ])
 
     @staticmethod
-    def RotationMatrixX(angle):
+    def RotationMatrixX(angle: float):
+        """
+        Creates a rotation matrix for the given angle around the X axis.
+        
+        :param angle: the angle to rotate by in degrees
+        :return: the 4x4 rotation matrix
+        """
+
         angle = np.radians(angle)
 
         return np.array([
@@ -134,7 +148,14 @@ class Transform:
         ])
 
     @staticmethod
-    def RotationMatrixY(angle):
+    def RotationMatrixY(angle: float):
+        """
+        Creates a rotation matrix for the given angle around the Y axis.
+
+        :param angle: the angle to rotate by in degrees
+        :return: the 4x4 rotation matrix
+        """
+
         angle = np.radians(angle)
 
         return np.array([
@@ -145,7 +166,13 @@ class Transform:
         ])
 
     @staticmethod
-    def RotationMatrixZ(angle):
+    def RotationMatrixZ(angle: float):
+        """
+        Creates a rotation matrix for the given angle around the Z axis.
+
+        :param angle: the angle to rotate by in degrees
+        :return: the 4x4 rotation matrix
+        """
         angle = np.radians(angle)
 
         return np.array([

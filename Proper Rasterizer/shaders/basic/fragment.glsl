@@ -24,16 +24,16 @@ uniform vec3 lightPos;
 uniform vec3 viewDir;
 
 // material properties
-uniform vec3 Ka;
-uniform vec3 Kd;
-uniform vec3 Ks;
+uniform float Ka; // ambient
+uniform float Kd; // diffuse
+uniform float Ks; // specular
 
-uniform float Ns;
-uniform float Ni;
-uniform float d;
-uniform int illum;
+uniform float Ns; // shininess (specular exponent)
+uniform float Ni; // optical density (index of refraction)
+uniform float d; // dissolve (opacity)
+uniform int illum; // illumination model
 
-const float M_PI = 3.1415926535897932384626433832795;
+#define PI 3.1415926535917932384626433832795
 
 float shadowCalc(float dotLightNormal, vec2 offset){
     float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
@@ -57,15 +57,91 @@ float softShadows(float dotLightNormal){
     return shadow / (float(size) * float(size) * 4);
 }
 
+float saturate(float x){
+    return clamp(x, 0.0, 1.0);
+}
+
+float phong_diffuse(){
+    return 1.0 / PI;
+}
+
+vec3 fresnel_factor(in vec3 f0, in float product){
+    return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
+}
+
+float D_blinn(in float roughness, in float NdH){
+    float m = roughness * roughness;
+    float m2 = m * m;
+    float n = 2.0 / m2 - 2.0;
+    return (n+2.0) / (2.0 * PI) * pow(NdH, n);
+}
+
+float D_beckmann(in float roughness, in float NdH){
+    float m = roughness * roughness;
+    float m2 = m * m;
+    float NdH2 = NdH * NdH;
+    return exp((NdH2 - 1.0) / (m2 * NdH2)) / (PI * m2 * NdH2 * NdH2);
+}
+
+float D_GGX(in float roughness, in float NdH){
+    float m = roughness * roughness;
+    float m2 = m * m;
+    float d = (NdH * m2 - NdH) * NdH + 1.0;
+    return m2 / (PI * d * d);
+}
+
+float G_shlick(in float roughness, in float NdV, in float NdL){
+    float k = roughness * roughness * 0.5;
+    float V = NdV * (1.0 - k) + k;
+    float L = NdL * (1.0 - k) + k;
+    return 0.25 / (V * L);
+}
+
+vec3 phong_specular(in vec3 V, in vec3 L, in vec3 N, in vec3 specular, in float roughness){
+    vec3 R = reflect(-L, N);
+    float spec = max(0.0, dot(V,R));
+
+    float k = 1.999 / (roughness * roughness);
+
+    return min(1.0, 3.0 * 0.0398 * k) * pow(spec, min(10000.0, k)) * specular;
+}
+
+vec3 blinn_specular(in float NdH, in vec3 specular, in float roughness){
+    float k = 1.999 / (roughness * roughness);
+
+    return min(1.0, 3.0 * 0.0398 * k) * pow(NdH, min(10000.0, k)) * specular;
+}
+
+vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 specular, in float roughness){
+    // if using cook_blinn
+    // float D = D_blinn(roughness, NdH);
+    // if using cook_beckmann
+    // float D = D_beckmann(roughness, NdH);
+    // if using cook_ggx
+    float D = D_GGX(roughness, NdH);
+    float G = G_shlick(roughness, NdV, NdL);
+
+    float rim = mix(1.0 - roughness * 0.9, 1.0, NdV);
+
+    return (1.0 / rim) * specular * G * D;
+}
+
 void main(){
     // PBR shading
     vec3 albedo = texture(_MainTex, TexCoords * tiling).rgb;
     vec3 normal = texture(_NormalMap, TexCoords * tiling).rgb;
     float roughness = texture(_RoughnessMap, TexCoords * tiling).r;
-    
+
     vec3 lightDir = normalize(lightPos - Position);
     float NdotL = max(dot(Normal, lightDir), 0.0);
-    vec3 color = albedo * softShadows(NdotL) * NdotL;
+    //vec3 color = albedo * softShadows(NdotL) * NdotL;
+    
+    float ambient = Ka;
+    float diffuse = Kd * NdotL;
+    float specular = Ks * pow(max(dot(reflect(-lightDir, Normal), normalize(viewDir)), 0.0), Ns);
+
+    vec3 combined = (ambient + diffuse + specular) * albedo;
+    vec3 color = combined * softShadows(NdotL);
 
     FragColor = vec4(color, 1.0);
 }

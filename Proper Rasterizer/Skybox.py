@@ -5,6 +5,7 @@ import blender
 import pygame
 
 from Camera import Camera
+from Shader import Shader
 
 class Skybox:
     def __init__(self):
@@ -50,7 +51,13 @@ class Skybox:
 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, self.skyboxMesh.faces, GL_STATIC_DRAW)
 
-    def draw(self, shader, camera):
+    def draw(self, shader: Shader, camera: Camera):
+        """
+        Draws the skybox
+        
+        :param shader: The shader to use, must be a skybox shader
+        :param camera: The camera to use, to get the view and projection matrices
+        """        
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_CUBE_MAP, self.cubeMap)
 
