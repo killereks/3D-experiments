@@ -67,7 +67,6 @@ class PostProcessing:
         glUniformMatrix4fv(self.shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
         glUniformMatrix4fv(self.shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
 
-
         glUniformMatrix4fv(self.shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightView())
 
         glUniform3fv(self.shader.get_keyword("camPos"), 1, self.camera.transform.position)

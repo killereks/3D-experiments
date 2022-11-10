@@ -256,8 +256,7 @@ class Scene:
                 #mesh.transform.position = self.sun.transform.position
                 #mesh.transform.lookAt(np.array([np.sin(current_time()),0,np.cos(current_time())]), np.array([0, 1, 0]))
                 # rotate to look at camera
-                #mesh.transform.lookAtSelf(self.camera.transform.position, np.array([0, 1, 0]))
-                pass
+                mesh.transform.lookAtSelf(self.camera.transform.position, np.array([0, 1, 0]))
 
             mesh.update(dt)
 
@@ -404,6 +403,10 @@ class Scene:
                     mesh.isIcon = mesh_data["isIcon"]
                 else:
                     mesh.isIcon = False
+
+                if "scripts" in mesh_data:
+                    for script in mesh_data["scripts"]:
+                        mesh.add_script(script)
 
                 self.meshes.append(mesh)
                 

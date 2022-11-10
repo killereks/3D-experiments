@@ -8,6 +8,8 @@ import numpy as np
 
 import Material
 
+from Programs import Programs
+
 class Mesh:
     def __init__(self, vertices: np.ndarray, faces: np.ndarray, normals: np.ndarray, uvs: np.ndarray):
         self.vertices = vertices
@@ -34,7 +36,18 @@ class Mesh:
 
         self.isIcon = False
 
+        self.scripts = []
+
         self.initialize()
+
+    def add_script(self, script):
+        """
+        Adds a script to the mesh
+        
+        :param script: The script to add
+        """
+        program = Programs[script]
+        self.scripts.append(program)
 
     def set_material(self, material: Material):
         """
@@ -137,8 +150,8 @@ class Mesh:
         """
         Updates the mesh position, rotation and scale
         """
-        pass
-        #self.transform.rotateAxis([0, 1, 0], dt * 5)
+        for script in self.scripts:
+            script(self, dt)
 
     @staticmethod
     def CreateScreenQuad():

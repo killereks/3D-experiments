@@ -26,15 +26,14 @@ class Quaternion:
 
         return Quaternion(w, x, y, z)
 
-    @staticmethod
-    def Inverse(q: Quaternion):
+    def Inverse(self):
         """
         Inverse of a quaternion, such that q * q.Inverse() = q.Identity()
         :param q: the quaternion to invert
         """
         # such that q * q.Inverse() = 1
         # conjugate
-        return Quaternion(q.w, -q.x, -q.y, -q.z)
+        return Quaternion(self.w, -self.x, -self.y, -self.z)
 
     def Normalize(self):
         """
@@ -153,25 +152,38 @@ class Quaternion:
         """
         Create a quaternion from a 3x3 rotation matrix
         :param matrix: the rotation matrix
+
+        https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
         """
-        trace = matrix[0][0] + matrix[1][1] + matrix[2][2]
-        if trace > 0:
-            s = 0.5 / np.sqrt(trace + 1.0)
-            return Quaternion(0.25 / s, (matrix[2][1] - matrix[1][2]) * s, (matrix[0][2] - matrix[2][0]) * s,
-                              (matrix[1][0] - matrix[0][1]) * s)
+        
+        tr = matrix[0][0] + matrix[1][1] + matrix[2][2]
+
+        if tr > 0:
+            s = np.sqrt(tr + 1.0) * 2
+            w = 0.25 * s
+            x = (matrix[2][1] - matrix[1][2]) / s
+            y = (matrix[0][2] - matrix[2][0]) / s
+            z = (matrix[1][0] - matrix[0][1]) / s
+        elif (matrix[0][0] > matrix[1][1]) and (matrix[0][0] > matrix[2][2]):
+            s = np.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2
+            w = (matrix[2][1] - matrix[1][2]) / s
+            x = 0.25 * s
+            y = (matrix[0][1] + matrix[1][0]) / s
+            z = (matrix[0][2] + matrix[2][0]) / s
+        elif matrix[1][1] > matrix[2][2]:
+            s = np.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2
+            w = (matrix[0][2] - matrix[2][0]) / s
+            x = (matrix[0][1] + matrix[1][0]) / s
+            y = 0.25 * s
+            z = (matrix[1][2] + matrix[2][1]) / s
         else:
-            if matrix[0][0] > matrix[1][1] and matrix[0][0] > matrix[2][2]:
-                s = 2.0 * np.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2])
-                return Quaternion((matrix[2][1] - matrix[1][2]) / s, 0.25 * s, (matrix[0][1] + matrix[1][0]) / s,
-                                  (matrix[0][2] + matrix[2][0]) / s)
-            elif matrix[1][1] > matrix[2][2]:
-                s = 2.0 * np.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2])
-                return Quaternion((matrix[0][2] - matrix[2][0]) / s, (matrix[0][1] + matrix[1][0]) / s, 0.25 * s,
-                                  (matrix[1][2] + matrix[2][1]) / s)
-            else:
-                s = 2.0 * np.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1])
-                return Quaternion((matrix[1][0] - matrix[0][1]) / s, (matrix[0][2] + matrix[2][0]) / s,
-                                  (matrix[1][2] + matrix[2][1]) / s, 0.25 * s)
+            s = np.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2
+            w = (matrix[1][0] - matrix[0][1]) / s
+            x = (matrix[0][2] + matrix[2][0]) / s
+            y = (matrix[1][2] + matrix[2][1]) / s
+            z = 0.25 * s
+
+        return Quaternion(w, x, y, z)
 
     @staticmethod
     def LookRotation(forward: np.ndarray, up: np.ndarray):
@@ -186,6 +198,7 @@ class Quaternion:
         up = np.cross(right, forward)
 
         m = np.array([right, up, forward],"f")
+
         return Quaternion.FromMatrix(m)
 
     def __str__(self):

@@ -135,11 +135,23 @@ class Transform:
         
         :param target: the target look at point
         :param up: the up vector (usually [0,1,0])"""
+        
+        position = self.position
+        
+        zaxis = np.subtract(target, position)
+        zaxis = zaxis / np.linalg.norm(zaxis)
 
-        pos = self.position
+        xaxis = np.cross(up, zaxis)
+        xaxis = xaxis / np.linalg.norm(xaxis)
 
-        lookMatrix = Transform.lookAt(pos, target, up)
-        self.rotation = Quaternion.FromMatrix(lookMatrix)
+        yaxis = np.cross(zaxis, xaxis)
+        yaxis = yaxis / np.linalg.norm(yaxis)
+
+        self.rotation = Quaternion.FromMatrix(np.array([
+            [xaxis[0], yaxis[0], zaxis[0]],
+            [xaxis[1], yaxis[1], zaxis[1]],
+            [xaxis[2], yaxis[2], zaxis[2]]
+        ]))
         
 
     @staticmethod
