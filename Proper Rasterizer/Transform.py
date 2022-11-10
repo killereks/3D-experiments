@@ -129,6 +129,19 @@ class Transform:
             [0, 0, 0, 1]
         ])
 
+    def lookAtSelf(self, target: np.ndarray, up: np.ndarray):
+        """
+        Sets the rotation of the transform to look at the given target, with the given up vector.
+        
+        :param target: the target look at point
+        :param up: the up vector (usually [0,1,0])"""
+
+        pos = self.position
+
+        lookMatrix = Transform.lookAt(pos, target, up)
+        self.rotation = Quaternion.FromMatrix(lookMatrix)
+        
+
     @staticmethod
     def RotationMatrixX(angle: float):
         """

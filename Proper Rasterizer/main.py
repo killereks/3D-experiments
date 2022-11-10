@@ -36,7 +36,7 @@ class Scene:
         self.width = 1024
         self.height = 768
 
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF, 24)
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF, 32)
 
         self.clock = pygame.time.Clock()
 
@@ -68,6 +68,10 @@ class Scene:
         glCullFace(GL_BACK)
 
         glClearColor(0.1, 0.2, 0.3, 1.0)
+
+        # enable transparency
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # initialize shadow map
         self.initialize_shadow_map()
@@ -245,9 +249,16 @@ class Scene:
         :param dt: Delta time, the time since the last frame, used to make updates framerate independent
         """
         #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 10, np.sin(current_time()) * 10])
-        self.sun.transform.position = np.array([5, 20, 5])
+        self.sun.transform.position = np.array([15, 20, 5])
 
         for mesh in self.meshes:
+            if mesh.isIcon:
+                #mesh.transform.position = self.sun.transform.position
+                #mesh.transform.lookAt(np.array([np.sin(current_time()),0,np.cos(current_time())]), np.array([0, 1, 0]))
+                # rotate to look at camera
+                #mesh.transform.lookAtSelf(self.camera.transform.position, np.array([0, 1, 0]))
+                pass
+
             mesh.update(dt)
 
 
@@ -388,6 +399,11 @@ class Scene:
                 recalculate_normals = mesh_data["recalculateNormals"]
                 if recalculate_normals:
                     mesh.recalculate_normals()
+
+                if "isIcon" in mesh_data:
+                    mesh.isIcon = mesh_data["isIcon"]
+                else:
+                    mesh.isIcon = False
 
                 self.meshes.append(mesh)
                 

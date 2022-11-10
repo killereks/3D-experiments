@@ -29,24 +29,24 @@ Materials:
   
   mat2:
     textures:
-      _MainTex: textures/cat.jpg
+      _MainTex: textures/icons/light_icon.png
     tiling: [1,1]
     
-    ambient: 0.2
-    diffuse: 0.8
-    specular: 1.0
-    specularExponent: 10.0
-    opticalDensity: 1.0
-    dissolve: 1.0
-    illumination: 2
+    ambient: 1.0
+    diffuse: 0.0
+    specular: 0.0
+    specularExponent: 0.0
+    opticalDensity: 0.0
+    dissolve: 0.0
+    illumination: 0
 
 Meshes:
   model0:
     path: models/random/sphere.obj
     material: mat1
-    position: [0, 2, 0]
+    position: [0, 10, -5]
     rotation: [0, 0, 0]
-    scale: [1, 1, 1]
+    scale: [10, 1, 10]
     recalculateNormals: true
   model1:
     path: models/quad/quad.obj
@@ -62,3 +62,12 @@ Meshes:
     rotation: [0, 0, 0]
     scale: [1, 1, 1]
     recalculateNormals: true
+    isIcon: true
+  lightIcon:
+    path: models/quad/quad.obj
+    material: mat2
+    position: [0, 10, 0]
+    rotation: [0, 0, 0]
+    scale: [1, 1, 1]
+    recalculateNormals: true
+    isIcon: true

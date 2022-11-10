@@ -24,6 +24,8 @@ class PostProcessing:
 
         self.quad = Mesh.CreateScreenQuad()
 
+        self.time_started = time.time()
+
         # initialize
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
 
@@ -62,6 +64,10 @@ class PostProcessing:
         glUniform3fv(self.shader.get_keyword("lightPos"), 1, self.sun.transform.position)
         glUniform3fv(self.shader.get_keyword("lightDir"), 1, self.sun.transform.forward())
 
+        glUniformMatrix4fv(self.shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
+        glUniformMatrix4fv(self.shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
+
+
         glUniformMatrix4fv(self.shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightView())
 
         glUniform3fv(self.shader.get_keyword("camPos"), 1, self.camera.transform.position)
@@ -69,7 +75,7 @@ class PostProcessing:
         glUniform3fv(self.shader.get_keyword("camUp"), 1, self.camera.transform.up())
         glUniform3fv(self.shader.get_keyword("camRight"), 1, self.camera.transform.right())
 
-        glUniform1f(self.shader.get_keyword("time"), time.time())
+        glUniform1f(self.shader.get_keyword("time"), time.time() - self.time_started)
 
         self.quad.draw()
 

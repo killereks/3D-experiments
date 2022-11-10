@@ -148,6 +148,45 @@ class Quaternion:
         s = np.sin(angle / 2)
         return Quaternion(np.cos(angle / 2), axis[0] * s, axis[1] * s, axis[2] * s)
 
+    @staticmethod
+    def FromMatrix(matrix: np.ndarray):
+        """
+        Create a quaternion from a 3x3 rotation matrix
+        :param matrix: the rotation matrix
+        """
+        trace = matrix[0][0] + matrix[1][1] + matrix[2][2]
+        if trace > 0:
+            s = 0.5 / np.sqrt(trace + 1.0)
+            return Quaternion(0.25 / s, (matrix[2][1] - matrix[1][2]) * s, (matrix[0][2] - matrix[2][0]) * s,
+                              (matrix[1][0] - matrix[0][1]) * s)
+        else:
+            if matrix[0][0] > matrix[1][1] and matrix[0][0] > matrix[2][2]:
+                s = 2.0 * np.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2])
+                return Quaternion((matrix[2][1] - matrix[1][2]) / s, 0.25 * s, (matrix[0][1] + matrix[1][0]) / s,
+                                  (matrix[0][2] + matrix[2][0]) / s)
+            elif matrix[1][1] > matrix[2][2]:
+                s = 2.0 * np.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2])
+                return Quaternion((matrix[0][2] - matrix[2][0]) / s, (matrix[0][1] + matrix[1][0]) / s, 0.25 * s,
+                                  (matrix[1][2] + matrix[2][1]) / s)
+            else:
+                s = 2.0 * np.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1])
+                return Quaternion((matrix[1][0] - matrix[0][1]) / s, (matrix[0][2] + matrix[2][0]) / s,
+                                  (matrix[1][2] + matrix[2][1]) / s, 0.25 * s)
+
+    @staticmethod
+    def LookRotation(forward: np.ndarray, up: np.ndarray):
+        """
+        Create a quaternion from a forward and up vector
+        :param forward: the forward vector
+        :param up: the up vector
+        """
+        forward = forward / np.linalg.norm(forward)
+        up = up / np.linalg.norm(up)
+        right = np.cross(forward, up)
+        up = np.cross(right, forward)
+
+        m = np.array([right, up, forward],"f")
+        return Quaternion.FromMatrix(m)
 
     def __str__(self):
         euler = self.ToEuler()

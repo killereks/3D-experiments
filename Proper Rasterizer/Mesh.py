@@ -32,6 +32,8 @@ class Mesh:
 
         LOG(f"Bounds (including scale): {self.bounds * self.transform.scale}")
 
+        self.isIcon = False
+
         self.initialize()
 
     def set_material(self, material: Material):
@@ -135,7 +137,6 @@ class Mesh:
         """
         Updates the mesh position, rotation and scale
         """
-
         pass
         #self.transform.rotateAxis([0, 1, 0], dt * 5)
 
