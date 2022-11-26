@@ -35,11 +35,14 @@ uniform int illum; // illumination model
 
 #define PI 3.1415926535917932384626433832795
 
+#define SHADOW_ALPHA 0.4
+
 float shadowCalc(float dotLightNormal, vec2 offset){
     float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
     vec3 pos = FragPosLightSpace.xyz * 0.5 + 0.5;
+    if (pos.z > 1.0) return SHADOW_ALPHA;
     float depth = texture(shadowMap, pos.xy + offset).r;
-    return depth + bias < pos.z ? 0.0 : 1.0;
+    return depth + bias < pos.z ? SHADOW_ALPHA : 1.0;
 }
 
 float softShadows(float dotLightNormal){
@@ -132,6 +135,8 @@ void main(){
     vec3 normal = texture(_NormalMap, TexCoords * tiling).rgb;
     float roughness = texture(_RoughnessMap, TexCoords * tiling).r;
 
+    float alpha = texture(_MainTex, TexCoords * tiling).a;
+
     vec3 lightDir = normalize(lightPos - Position);
     float NdotL = max(dot(Normal, lightDir), 0.0);
     //vec3 color = albedo * softShadows(NdotL) * NdotL;
@@ -142,6 +147,13 @@ void main(){
 
     vec3 combined = (ambient + diffuse + specular) * albedo;
     vec3 color = combined * softShadows(NdotL);
+
+    // apply reflections from the skybox
+    vec3 reflectDir = reflect(-lightDir, Normal);
+    vec3 skyColor = texture(_Skybox, reflectDir).rgb;
+    color = mix(color, skyColor, 0.0);
+
+    if (alpha < 0.5) discard;
 
     FragColor = vec4(color, 1.0);
 }

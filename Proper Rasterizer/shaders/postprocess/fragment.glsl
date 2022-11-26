@@ -21,13 +21,15 @@ uniform float time;
 #define USE_VIGNETTE 0
 
 #define USE_VOLUMETRIC_LIGHT 0
-#define VL_STEP_COUNT 64
+#define VL_STEP_COUNT 64.0
 #define VL_STEP_SIZE 0.1
-#define VL_DISTANCE 10.0
+#define VL_DISTANCE 25.0
 
-#define USE_FILM_GRAIN 1
+#define USE_FILM_GRAIN 0
 #define FILM_GRAIN_INTENSITY 0.1
 #define FILM_GRAIN_SCANLINE 0
+
+#define PI 3.1415926535897932384626433832795
 
 in vec2 Position;
 in vec4 FragPosLightSpace;
@@ -59,11 +61,20 @@ vec3 getWorldPosition(vec2 TexCoord){
     return worldSpacePosition.xyz;
 }
 
-float inShadow(){
+float inShadow(vec2 pos){
+    float depth = texture(shadowMap, pos).r;
+    float lightSpaceDepth = FragPosLightSpace.z / FragPosLightSpace.w;
     float bias = 0.005;
-    vec3 pos = FragPosLightSpace.xyz * 0.5 + 0.5;
-    float depth = texture(shadowMap, pos.xy).r;
-    return depth + bias < pos.z ? 0.0 : 1.0;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x){
+        for(int y = -1; y <= 1; ++y){
+            float pcfDepth = texture(shadowMap, pos + vec2(x, y) * texelSize).r;
+            shadow += pcfDepth - bias > lightSpaceDepth ? 1.0 : 0.4;
+        }
+    }
+    shadow *= 0.11111111111111111111111111111111;
+    return shadow;
 }
 
 vec3 ACES(vec3 colorInput){
@@ -90,30 +101,37 @@ vec3 Vignette(vec3 colorInput, vec2 uv){
     return colorInput * vignetteIntensity;
 }
 
-vec3 VolumetricLighting(vec3 color, vec2 uv){
-    vec3 pos = getWorldPosition(Position);
+// UV = [0,1]
+// screenPos = [-1,1]
+vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
+    vec3 pos = getWorldPosition(uv);
+    
+    float lum = 0.0;
 
-    float lum = 0;
+    float camDepth = lineariseDepth(texture(cameraDepthMap, uv).r);
+    vec3 disp = normalize(camFwd + camUp * screenPos.y + camRight * screenPos.x);
 
-    float camDepth = lineariseDepth(texture(cameraDepthMap, uv.xy).r);
-    vec3 disp = normalize(camFwd + camUp * (uv.y * 2 - 1) + camRight * (uv.x * 2 - 1));
-    float stepSize = 1.0 / float(VL_STEP_COUNT);
+    float stepSize = 1.0 / VL_STEP_COUNT;
     float sampleDepth = random(uv + time * 0.01) * stepSize * VL_DISTANCE;
 
     for (int i = 0; i < VL_STEP_COUNT; i++){
         vec4 wpos = vec4(camPos + disp * sampleDepth, 1.0);
-        
+
         if (sampleDepth >= camDepth) break;
 
-        vec4 lpos = FragPosLightSpace * wpos;
-        lpos /= lpos.w;
+        vec4 lightPos = FragPosLightSpace * wpos;
+        
+        lightPos /= lightPos.w;
+        
+        lightPos = lightPos * 0.5 + 0.5;
 
-        float shadowIntensity = inShadow();
-        lum += stepSize * shadowIntensity;
+        float shadow = inShadow(lightPos.xy);
+
+        lum += shadow * stepSize;
 
         sampleDepth += stepSize * VL_DISTANCE;
     }
-
+    
     return color * lum;
 }
 
@@ -156,22 +174,22 @@ void main(){
     // volumetric lighting
     
     vec3 color = albedo;
-    # if USE_ACES
-        color = ACES(color);
-    # endif
-
-    # if USE_VIGNETTE
-        color = Vignette(color, TexCoords);
-    # endif
 
     #if USE_VOLUMETRIC_LIGHT
-        color = VolumetricLighting(color, TexCoords);
+        color = VolumetricLighting(color, TexCoords, Position);
     #endif
 
     # if USE_FILM_GRAIN
         color = FilmGrain(color, TexCoords);
     # endif
 
+    # if USE_ACES
+        color = ACES(color);
+    # endif
+    
+    # if USE_VIGNETTE
+        color = Vignette(color, TexCoords);
+    # endif
     //FragColor = vec4(color, 1.0);
 
     //vec3 pos = getWorldPosition(TexCoords);

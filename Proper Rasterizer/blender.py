@@ -1,5 +1,5 @@
 import numpy as np
-from custom_logging import LOG
+from custom_logging import LOG, LogLevel
 
 import Mesh
 
@@ -59,7 +59,12 @@ def load_obj_file(file_name: str):
 		# convert to numpy arrays
 		vertices = np.array(vertices, dtype='f')
 		normals = np.array(normals, dtype='f')
-		texcoords = np.array(texcoords, dtype='f')
+
+		if len(texcoords) == 0:
+			texcoords = np.zeros((len(vertices), 2))
+			LOG("No texture coordinates found, using default texture coordinates", LogLevel.WARNING)
+		else:
+			texcoords = np.array(texcoords, dtype='f')
 		
 		faces = np.array(faces, dtype=np.uint32)
 

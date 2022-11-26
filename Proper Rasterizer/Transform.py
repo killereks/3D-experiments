@@ -105,30 +105,6 @@ class Transform:
         """
         self.rotation *= Quaternion.FromAxisAngle(vector, angle)
 
-    @staticmethod
-    def lookAt(position: np.ndarray, target: np.ndarray, up: np.ndarray):
-        """
-        Creates a view matrix for the given position, target, and up vector.
-        
-        :param position: the position of the object
-        :param target: the target look at point
-        :param up: the up vector (usually [0,1,0])"""
-        zaxis = np.subtract(position, target)
-        zaxis = zaxis / np.linalg.norm(zaxis)
-
-        xaxis = np.cross(up, zaxis)
-        xaxis = xaxis / np.linalg.norm(xaxis)
-
-        yaxis = np.cross(zaxis, xaxis)
-        yaxis = yaxis / np.linalg.norm(yaxis)
-
-        return np.array([
-            [xaxis[0], yaxis[0], zaxis[0], position[0]],
-            [xaxis[1], yaxis[1], zaxis[1], position[1]],
-            [xaxis[2], yaxis[2], zaxis[2], position[2]],
-            [0, 0, 0, 1]
-        ])
-
     def lookAtSelf(self, target: np.ndarray, up: np.ndarray):
         """
         Sets the rotation of the transform to look at the given target, with the given up vector.
@@ -138,7 +114,7 @@ class Transform:
         
         position = self.position
         
-        zaxis = np.subtract(target, position)
+        zaxis = np.subtract(position, target)
         zaxis = zaxis / np.linalg.norm(zaxis)
 
         xaxis = np.cross(up, zaxis)

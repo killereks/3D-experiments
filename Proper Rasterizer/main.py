@@ -128,12 +128,15 @@ class Scene:
 
         This is used for the shadow map pass and the main draw pass, so shader is flexible.
         
-        :param shader: The shader to use
+        :param shader: Override shader to use for drawing
         """
-        shader.use()
+        if shader is not None:
+            shader.use()
 
         for mesh in self.meshes:
             self.set_matrices(mesh, shader)
+            if shader == None:
+                mesh.shader.use()
             mesh.draw()
 
     def shadow_map(self):
@@ -142,6 +145,8 @@ class Scene:
         
         This is used to determine which fragments are in shadow.
         """
+        glCullFace(GL_FRONT)
+
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
 
@@ -160,6 +165,8 @@ class Scene:
         self.draw_scene(shadow_map_shader)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+        glCullFace(GL_BACK)
 
     def camera_depth(self):
         """
@@ -248,7 +255,7 @@ class Scene:
 
         :param dt: Delta time, the time since the last frame, used to make updates framerate independent
         """
-        #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 10, np.sin(current_time()) * 10])
+        #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 2, np.sin(current_time()) * 10])
         self.sun.transform.position = np.array([15, 20, 5])
 
         for mesh in self.meshes:
@@ -287,7 +294,6 @@ class Scene:
             self.update(dt)
 
             # MAIN DRAW LOOP
-            self.skybox.draw(skybox_shader, self.camera)
             self.shadow_map()
             self.camera_depth()
 
@@ -296,6 +302,7 @@ class Scene:
             self.postprocessing.before_draw(self.depthMap, self.sun, self.camera, self.cameraDepthMap)
             glViewport(0, 0, self.width, self.height)
             self.draw_scene(lit_shader)
+            self.skybox.draw(skybox_shader, self.camera)
             self.postprocessing.after_draw()
 
             # refreshing

@@ -34,6 +34,8 @@ class Material:
 
         self.name = "default"
 
+        self.shader = None
+
     def add_texture(self, tex: Texture, name: str):
         """
         Add a texture to the material
