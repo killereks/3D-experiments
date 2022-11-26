@@ -4,6 +4,8 @@ from OpenGL.GL import *
 
 import time
 
+import numpy as np
+
 class PostProcessing:
     def __init__(self, shader, width, height):
         # list of shaders to apply one by one
@@ -62,17 +64,21 @@ class PostProcessing:
         glUniform1i(self.shader.get_keyword("cameraDepthMap"), 2)
         
         glUniform3fv(self.shader.get_keyword("lightPos"), 1, self.sun.transform.position)
-        glUniform3fv(self.shader.get_keyword("lightDir"), 1, self.sun.transform.forward())
+
+        # normalized light direction towards origin
+        lightDir = -self.sun.transform.position / np.linalg.norm(self.sun.transform.position)
+        glUniform3fv(self.shader.get_keyword("lightDir"), 1, lightDir)
 
         glUniformMatrix4fv(self.shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
         glUniformMatrix4fv(self.shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
 
-        glUniformMatrix4fv(self.shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightView())
+        glUniformMatrix4fv(self.shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightSpaceMatrix())
+        glUniformMatrix4fv(self.shader.get_keyword("lightModel"), 1, GL_TRUE, self.sun.getLightView())
 
-        glUniform3fv(self.shader.get_keyword("camPos"), 1, self.camera.transform.position)
-        glUniform3fv(self.shader.get_keyword("camFwd"), 1, self.camera.transform.forward())
-        glUniform3fv(self.shader.get_keyword("camUp"), 1, self.camera.transform.up())
-        glUniform3fv(self.shader.get_keyword("camRight"), 1, self.camera.transform.right())
+        glUniform3fv(self.shader.get_keyword("camPos"), 1, -self.camera.transform.position)
+        glUniform3fv(self.shader.get_keyword("camFwd"), 1, -self.camera.forward())
+        glUniform3fv(self.shader.get_keyword("camUp"), 1, self.camera.up())
+        glUniform3fv(self.shader.get_keyword("camRight"), 1, self.camera.right())
 
         glUniform1f(self.shader.get_keyword("time"), time.time() - self.time_started)
 

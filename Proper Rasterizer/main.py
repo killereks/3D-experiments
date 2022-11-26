@@ -263,9 +263,11 @@ class Scene:
                 #mesh.transform.position = self.sun.transform.position
                 #mesh.transform.lookAt(np.array([np.sin(current_time()),0,np.cos(current_time())]), np.array([0, 1, 0]))
                 # rotate to look at camera
-                mesh.transform.lookAtSelf(self.camera.transform.position, np.array([0, 1, 0]))
+                mesh.transform.lookAtSelf(-self.camera.transform.position, np.array([0, 1, 0]))
 
             mesh.update(dt)
+
+        self.meshes[0].transform.position = self.sun.transform.position
 
 
     def run(self):

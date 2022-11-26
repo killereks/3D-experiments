@@ -17,22 +17,24 @@ uniform mat4 view;
 
 uniform float time;
 
-#define USE_ACES 0
-#define USE_VIGNETTE 0
+#define USE_ACES 1
+#define USE_VIGNETTE 1
 
-#define USE_VOLUMETRIC_LIGHT 0
+#define USE_VOLUMETRIC_LIGHT 1
 #define VL_STEP_COUNT 64.0
-#define VL_STEP_SIZE 0.1
-#define VL_DISTANCE 25.0
+#define VL_DISTANCE 50.0
 
 #define USE_FILM_GRAIN 0
 #define FILM_GRAIN_INTENSITY 0.1
-#define FILM_GRAIN_SCANLINE 0
+#define FILM_GRAIN_SCANLINE 1
 
 #define PI 3.1415926535897932384626433832795
 
 in vec2 Position;
 in vec4 FragPosLightSpace;
+
+uniform mat4 lightModel;
+uniform mat4 lightSpaceMatrix;
 
 out vec4 FragColor;
 
@@ -61,19 +63,24 @@ vec3 getWorldPosition(vec2 TexCoord){
     return worldSpacePosition.xyz;
 }
 
-float inShadow(vec2 pos){
-    float depth = texture(shadowMap, pos).r;
-    float lightSpaceDepth = FragPosLightSpace.z / FragPosLightSpace.w;
+float worldToShadow(vec3 worldPos){
+    // returns if world position is in shadow
+    vec4 lightSpacePos = lightSpaceMatrix * vec4(worldPos, 1.0);
+    lightSpacePos /= lightSpacePos.w;
+
+    lightSpacePos = lightSpacePos * 0.5 + 0.5;
+
+    float shadow = 1.0;
+
     float bias = 0.005;
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(int x = -1; x <= 1; ++x){
-        for(int y = -1; y <= 1; ++y){
-            float pcfDepth = texture(shadowMap, pos + vec2(x, y) * texelSize).r;
-            shadow += pcfDepth - bias > lightSpaceDepth ? 1.0 : 0.4;
-        }
+
+    float closestDepth = texture(shadowMap, lightSpacePos.xy).r;
+    float currentDepth = lightSpacePos.z;
+
+    if(currentDepth - bias > closestDepth){
+        shadow = 0.0;
     }
-    shadow *= 0.11111111111111111111111111111111;
+
     return shadow;
 }
 
@@ -103,34 +110,34 @@ vec3 Vignette(vec3 colorInput, vec2 uv){
 
 // UV = [0,1]
 // screenPos = [-1,1]
-vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
-    vec3 pos = getWorldPosition(uv);
-    
+vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){    
     float lum = 0.0;
 
     float camDepth = lineariseDepth(texture(cameraDepthMap, uv).r);
     vec3 disp = normalize(camFwd + camUp * screenPos.y + camRight * screenPos.x);
-
     float stepSize = 1.0 / VL_STEP_COUNT;
     float sampleDepth = random(uv + time * 0.01) * stepSize * VL_DISTANCE;
 
+    float iters = 0;
+
     for (int i = 0; i < VL_STEP_COUNT; i++){
-        vec4 wpos = vec4(camPos + disp * sampleDepth, 1.0);
+        vec3 pos = camPos + disp * sampleDepth;
 
-        if (sampleDepth >= camDepth) break;
+        float shadow = worldToShadow(pos);
 
-        vec4 lightPos = FragPosLightSpace * wpos;
-        
-        lightPos /= lightPos.w;
-        
-        lightPos = lightPos * 0.5 + 0.5;
+        if (sampleDepth > camDepth) break;
 
-        float shadow = inShadow(lightPos.xy);
-
-        lum += shadow * stepSize;
+        //lum += shadow * stepSize;
+        lum += shadow;
 
         sampleDepth += stepSize * VL_DISTANCE;
+
+        iters++;
     }
+
+    lum = lum / iters;
+
+    lum = pow(lum, 2.0);
     
     return color * lum;
 }

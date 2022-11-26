@@ -114,7 +114,7 @@ class Transform:
         
         position = self.position
         
-        zaxis = np.subtract(position, target)
+        zaxis = np.subtract(target, position)
         zaxis = zaxis / np.linalg.norm(zaxis)
 
         xaxis = np.cross(up, zaxis)
@@ -182,3 +182,11 @@ class Transform:
             [0, 0, 1, 0],
             [0, 0, 0, 1]
         ])
+
+    def print(self):
+        """
+        Prints the transform.
+        """
+        print("Position: ", self.position)
+        print("Rotation: ", self.rotation)
+        print("Scale: ", self.scale)

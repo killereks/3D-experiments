@@ -41,12 +41,30 @@ Materials:
     illumination: 0
 
 Meshes:
+  model2:
+    path: models/monkey/monkey.obj
+    material: mat0
+    position: [5, 0, 0]
+    rotation: [0, 0, 0]
+    scale: [1, 1, 1]
+    recalculateNormals: true
+    isIcon: true
+    scripts:
+      - RotateOverTime
+  lightIcon:
+    path: models/quad/quad.obj
+    material: mat2
+    position: [0, 2, 0]
+    rotation: [-90, 180, 0]
+    scale: [10, 10, 10]
+    recalculateNormals: true
+    isIcon: true
   sphere:
     path: models/random/sphere.obj
     material: mat0
     position: [5, 0, 0]
     rotation: [0, 0, 0]
-    scale: [1, 1, 1]
+    scale: [0.5, 0.5, 0.5]
     recalculateNormals: true
   model1:
     path: models/quad/quad.obj
@@ -54,22 +72,6 @@ Meshes:
     position: [0, -2, 0]
     rotation: [0, 0, 0]
     scale: [100, 100, 100]
-    recalculateNormals: true
-  model2:
-    path: models/monkey/monkey.obj
-    material: mat0
-    position: [0, 0, 0]
-    rotation: [0, 0, 0]
-    scale: [1, 1, 1]
-    recalculateNormals: true
-    scripts:
-      - RotateOverTime
-  lightIcon:
-    path: models/quad/quad.obj
-    material: mat2
-    position: [0, 3, 0]
-    rotation: [-90, 180, 0]
-    scale: [1, 1, 1]
     recalculateNormals: true
   cube:
     path: models/skybox.obj
