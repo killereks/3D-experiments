@@ -107,14 +107,14 @@ mat4 CreateModelMatrix(vec3 pos, float rotation, vec3 scale){
 void main(){
     vec2 id = vec2(gl_InstanceID / 25, gl_InstanceID / 1000);
 
-    float size = 200.0;
+    float size = 50.0;
 
     vec3 pos = vec3(random21(id) * size - size * 0.5, 0.0, random21(id + random21(id)) * size - size * 0.5);
 
     float rotation = random21(id) * 6.28318530718;
-    vec3 scale = vec3(3.0);
+    float scale = rand(id) * 4.0 + 3.0;
 
-    mat4 model = CreateModelMatrix(pos, rotation, scale);
+    mat4 model = CreateModelMatrix(pos, rotation, vec3(scale));
 
     // simulate wind by moving the blades, the higher the wind the faster the blades move
     vec3 windDirection = vec3(1.0, 0.0, 1.0);
@@ -126,12 +126,12 @@ void main(){
     float noiseScale = pNoise(worldPos.xz * 2.0 + time * 10.0, 10) * 1.0;
     float windTurbulence = pNoise(worldPos.xz + time * 25.0, 10) * 0.1;
 
-    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * vUV.y;
+    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * vUV.y * vUV.y;
     
     gl_Position = projection * view * worldPos;
 
     position = pos;
-    uv = vUV;
+    uv = vec2(vUV.x, 1.0 - vUV.y);
     // transform normals to world space
     // Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     normal = normalize(transpose(inverse(mat3(model))) * inNormal);

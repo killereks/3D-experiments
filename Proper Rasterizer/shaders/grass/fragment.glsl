@@ -5,6 +5,9 @@ out vec4 FragColor;
 uniform vec3 sunPosition;
 uniform vec3 sunDirection;
 
+uniform sampler2D albedoMap;
+uniform sampler2D opacityMap;
+
 in vec3 position;
 in vec2 uv;
 in vec3 normal;
@@ -37,11 +40,19 @@ void main(){
     vec3 grassColor = mix(mix(grassColor1, grassColor2, uv.y), mix(grassColor3, grassColor4, uv.y), uv.x);
 
     float shade = random21(vec2(m_ID, m_ID * 5.0)) * 0.3 + 0.7;
+    grassColor *= shade;
+
+    vec3 albedo = texture(albedoMap, uv).rgb;
+    float opacity = texture(opacityMap, uv).r;
 
     // calculate light intensity
     //float lightIntensity = dot(normal, -sunDirection);
     //grassColor *= lightIntensity;
 
     // set fragment color
-    FragColor = vec4(grassColor * shade, 1.0);
+    //FragColor = vec4(grassColor, 1.0);
+
+    if (opacity < 0.5) discard;
+
+    FragColor = vec4(albedo, 1.0);
 }

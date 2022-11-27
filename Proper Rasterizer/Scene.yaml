@@ -111,6 +111,8 @@ Meshes:
     rotation: [0, 70, 0]
     scale: [5, 5, 5]
     recalculateNormals: true
+    scripts:
+      - ScaleAnimation
   ground:
     path: models/jungle/divided_quad.obj
     material: groundMat
@@ -120,3 +122,10 @@ Meshes:
     recalculateNormals: true
     one_time_scripts:
       - ProceduralTerrain
+  tree:
+    path: models/jungle/tree.obj
+    material: treeMat
+    position: [0, 2, 0]
+    rotation: [0, 0, 0]
+    scale: [1, 1, 1]
+    recalculateNormals: true

@@ -5,6 +5,7 @@ from OpenGL.GL import *
 
 import numpy as np
 import random
+from Texture import Texture
 
 import time
 
@@ -39,6 +40,9 @@ class GrassField:
         glBindBuffer(GL_ARRAY_BUFFER, self.nbo)
         glBufferData(GL_ARRAY_BUFFER, self.mesh.normals, GL_STATIC_DRAW)
 
+        self.albedo = Texture.Load("textures/Grass/color.jpg")
+        self.opacity = Texture.Load("textures/Grass/opacity.jpg")        
+
         self.camera = camera
         self.sun = light
         self.started = time.time()
@@ -58,6 +62,16 @@ class GrassField:
 
         glUniform3fv(shader.get_keyword("sunPos"), 1, self.sun.transform.position)
         glUniform3fv(shader.get_keyword("sunDirection"), 1, -self.sun.transform.position)
+
+        self.albedo.use(0)
+        glUniform1i(shader.get_keyword("albedoMap"), 0)
+
+        self.opacity.use(1)
+        glUniform1i(shader.get_keyword("opacityMap"), 1)
+
+        #glActiveTexture(GL_TEXTURE0)
+        #glBindTexture(GL_TEXTURE_2D, self.heightTexture)
+        #glUniform1i(shader.get_keyword("heightMap"), 0)
 
         # draw the grass and feed vertex data in location 0
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)

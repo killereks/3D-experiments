@@ -315,7 +315,19 @@ class Scene:
             # refreshing
             self.clock.tick(165)
             pygame.display.flip()
-        
+    
+    def get_mesh(self, name: str) -> Mesh:
+        """
+        Gets a mesh by its name.
+
+        :param name: The name of the mesh
+        :return: The mesh with the given name
+        """
+        for mesh in self.meshes:
+            if mesh.name == name:
+                return mesh
+
+        return None
 
     def cameraMovement(self, dt: float):
         # holding keys
@@ -386,7 +398,7 @@ class Scene:
                 mat.illumination = material_data["illumination"]
 
                 for tex_name, tex_path in texture_data.items():
-                    tex = Texture(tex_path)
+                    tex = Texture.Load(tex_path)
                     mat.add_texture(tex, tex_name)
 
                 materials[material_name] = mat
