@@ -17,6 +17,7 @@ Materials:
       _MainTex: textures/Marble/Color.jpg
       _NormalMap: textures/Marble/Normal.jpg
       _RoughnessMap: textures/Marble/Roughness.jpg
+      _DisplacementMap: textures/Marble/Displacement.jpg
     tiling: [1,1]
 
     ambient: 0.2
@@ -38,6 +39,34 @@ Materials:
     specularExponent: 0.0
     opticalDensity: 0.0
     dissolve: 0.0
+    illumination: 0
+  treeMat:
+    textures:
+      _MainTex: textures/tree/tree_albedo.png
+      _NormalMap: textures/tree/tree_normal.png
+      _MaskMap: textures/tree/tree_mask.png
+    tiling: [1,1]
+    ambient: 0.2
+    diffuse: 1.0
+    specular: 0.0
+    specularExponent: 0.0
+    opticalDensity: 0.0
+    dissolve: 1.0
+    illumination: 0
+  groundMat:
+    textures:
+      _MainTex: textures/Ground/Ground_Albedo.jpg
+      _NormalMap: textures/Ground/Ground_Normal.jpg
+      _RoughnessMap: textures/Ground/Ground_Roughness.jpg
+      _DisplacementMap: textures/Ground/Ground_Displacement.jpg
+      _AmbientOcclusionMap: textures/Ground/Ground_AO.jpg
+    tiling: [20,20]
+    ambient: 0.2
+    diffuse: 1.0
+    specular: 0.0
+    specularExponent: 0.0
+    opticalDensity: 0.0
+    dissolve: 1.0
     illumination: 0
 
 Meshes:
@@ -61,17 +90,10 @@ Meshes:
     isIcon: true
   sphere:
     path: models/random/sphere.obj
-    material: mat0
-    position: [5, 0, 0]
+    material: mat1
+    position: [-5, 3, 0]
     rotation: [0, 0, 0]
-    scale: [0.5, 0.5, 0.5]
-    recalculateNormals: true
-  model1:
-    path: models/quad/quad.obj
-    material: mat0
-    position: [0, -2, 0]
-    rotation: [0, 0, 0]
-    scale: [100, 100, 100]
+    scale: [1, 1, 1]
     recalculateNormals: true
   cube:
     path: models/skybox.obj
@@ -88,4 +110,11 @@ Meshes:
     position: [20, 3, 0]
     rotation: [0, 70, 0]
     scale: [5, 5, 5]
+    recalculateNormals: true
+  ground:
+    path: models/jungle/divided_quad.obj
+    material: groundMat
+    position: [0, 0, 0]
+    rotation: [0, 0, 0]
+    scale: [100, 100, 100]
     recalculateNormals: true

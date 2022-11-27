@@ -23,6 +23,9 @@ from Mesh import Mesh
 from Skybox import Skybox
 from PostProcessing import PostProcessing
 
+from Programs import Programs
+from GrassField import GrassField
+
 import yaml
 
 from custom_logging import LOG, LogLevel
@@ -138,6 +141,8 @@ class Scene:
             if shader == None:
                 mesh.shader.use()
             mesh.draw()
+            
+        grass_field.draw(grass_shader)
 
     def shadow_map(self):
         """
@@ -330,7 +335,7 @@ class Scene:
 
         # if holding left shift speed up
         if keys[pygame.K_LSHIFT]:
-            speed *= 5
+            speed *= 15
 
         if keys[pygame.K_w]:
             self.camera.transform.position += self.camera.forward() * speed
@@ -417,6 +422,13 @@ class Scene:
                     for script in mesh_data["scripts"]:
                         mesh.add_script(script)
 
+                if "one_time_scripts" in mesh_data:
+                    scripts = mesh_data["one_time_scripts"]
+                    for script in scripts:
+                        program = Programs[script]
+                        program(mesh)
+                        print("Initialized script", script)
+
                 self.meshes.append(mesh)
                 
 
@@ -438,6 +450,10 @@ lit_shader = Shader.Shader("shaders/basic/vertex.glsl", "shaders/basic/fragment.
 skybox_shader = Shader.Shader("shaders/skybox/vertex.glsl", "shaders/skybox/fragment.glsl")
 postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/postprocess/fragment.glsl")
 camera_depth_shader = Shader.Shader("shaders/camera/camera_depth_vertex.glsl", "shaders/camera/camera_depth_fragment.glsl")
+grass_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/grass/fragment.glsl")
+
+grass_field = GrassField()
+grass_field.setup(scene.camera, scene.sun)
 
 scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 

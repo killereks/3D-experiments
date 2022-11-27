@@ -13,6 +13,7 @@ uniform float time;
 uniform sampler2D _MainTex;
 uniform sampler2D _NormalMap;
 uniform sampler2D _RoughnessMap;
+uniform sampler2D _DisplacementMap;
 
 uniform samplerCube _Skybox;
 
@@ -130,12 +131,15 @@ vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 spe
 }
 
 void main(){
-    // PBR shading
-    vec3 albedo = texture(_MainTex, TexCoords * tiling).rgb;
-    vec3 normal = texture(_NormalMap, TexCoords * tiling).rgb;
-    float roughness = texture(_RoughnessMap, TexCoords * tiling).r;
+    vec2 uv = TexCoords * tiling;
 
-    float alpha = texture(_MainTex, TexCoords * tiling).a;
+    // PBR shading
+    vec3 albedo = texture(_MainTex, uv).rgb;
+    vec3 normal = texture(_NormalMap, uv).rgb;
+    float roughness = texture(_RoughnessMap, uv).r;
+    vec3 displacement = texture(_DisplacementMap, uv).rgb;
+
+    float alpha = texture(_MainTex, uv).a;
 
     vec3 lightDir = normalize(lightPos - Position);
     float NdotL = max(dot(Normal, lightDir), 0.0);
@@ -149,9 +153,9 @@ void main(){
     vec3 color = combined * softShadows(NdotL);
 
     // apply reflections from the skybox
-    vec3 reflectDir = reflect(-lightDir, Normal);
+    /*vec3 reflectDir = reflect(-lightDir, Normal);
     vec3 skyColor = texture(_Skybox, reflectDir).rgb;
-    color = mix(color, skyColor, 0.0);
+    color = mix(color, skyColor, 0.0);*/
 
     if (alpha < 0.5) discard;
 

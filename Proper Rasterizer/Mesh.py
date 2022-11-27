@@ -189,5 +189,39 @@ class Mesh:
 
         return mesh
 
+    @staticmethod
+    def CreateQuad(divisions):
+        """
+        Creates a quad mesh with the given number of divisions
+        
+        :param divisions: The number of divisions
+        :return: The quad mesh
+        """
+        vertices = []
+        faces = []
+        normals = []
+        uvs = []
+
+        for i in range(divisions + 1):
+            for j in range(divisions + 1):
+                vertices.append([i / divisions, j / divisions, 0])
+                normals.append([0, 0, 1])
+                uvs.append([i / divisions, j / divisions])
+
+        for i in range(divisions):
+            for j in range(divisions):
+                faces.append([i * (divisions + 1) + j, i * (divisions + 1) + j + 1, (i + 1) * (divisions + 1) + j + 1])
+                faces.append([i * (divisions + 1) + j, (i + 1) * (divisions + 1) + j + 1, (i + 1) * (divisions + 1) + j])
+
+        vertices = np.array(vertices, dtype="f")
+        faces = np.array(faces, dtype="i")
+        normals = np.array(normals, dtype="f")
+        uvs = np.array(uvs, dtype="f")
+
+        mesh = Mesh(vertices, faces, normals, uvs)
+        mesh.name = "Quad"
+
+        return mesh
+
         
         
