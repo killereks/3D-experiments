@@ -118,3 +118,5 @@ Meshes:
     rotation: [0, 0, 0]
     scale: [100, 100, 100]
     recalculateNormals: true
+    one_time_scripts:
+      - ProceduralTerrain

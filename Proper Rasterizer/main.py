@@ -49,7 +49,7 @@ class Scene:
 
         aspect = self.width / self.height
 
-        self.camera = Camera(80, aspect, 0.1, 100)
+        self.camera = Camera(80, aspect, 0.1, 250)
         self.camera.transform.translate(0, -2, -5)
 
         self.depthMapFBO = glGenFramebuffers(1)
