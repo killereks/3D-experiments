@@ -141,8 +141,6 @@ class Scene:
             if shader == None:
                 mesh.shader.use()
             mesh.draw()
-            
-        grass_field.draw(grass_shader)
 
     def shadow_map(self):
         """
@@ -236,6 +234,8 @@ class Scene:
         glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
 
         mesh.material.use(shader)
+
+        glUniform1f(shader.get_keyword("time"), current_time())
     
     def set_face_culling(self, cull_face_type: int):
         """
@@ -272,7 +272,7 @@ class Scene:
 
             mesh.update(dt)
 
-        self.meshes[0].transform.position = self.sun.transform.position
+        #self.meshes[0].transform.position = self.sun.transform.position
 
 
     def run(self):
@@ -308,7 +308,11 @@ class Scene:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.postprocessing.before_draw(self.depthMap, self.sun, self.camera, self.cameraDepthMap)
             glViewport(0, 0, self.width, self.height)
+
             self.draw_scene(lit_shader)
+
+            grass_field.draw(grass_shader, current_time())
+
             self.skybox.draw(skybox_shader, self.camera)
             self.postprocessing.after_draw()
 
@@ -397,6 +401,9 @@ class Scene:
                 mat.dissolve = material_data["dissolve"]
                 mat.illumination = material_data["illumination"]
 
+                if "tiling_speed" in material_data:
+                    mat.tiling_speed = material_data["tiling_speed"]
+
                 for tex_name, tex_path in texture_data.items():
                     tex = Texture.Load(tex_path)
                     mat.add_texture(tex, tex_name)
@@ -437,9 +444,9 @@ class Scene:
                 if "one_time_scripts" in mesh_data:
                     scripts = mesh_data["one_time_scripts"]
                     for script in scripts:
+                        LOG(f"Running one time script {script} on {mesh_name}", LogLevel.INFO)
                         program = Programs[script]
                         program(mesh)
-                        print("Initialized script", script)
 
                 self.meshes.append(mesh)
                 

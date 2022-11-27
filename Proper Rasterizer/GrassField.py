@@ -11,10 +11,7 @@ import time
 
 class GrassField:
     def setup(self, camera, light):
-
         self.mesh = blender.load_mesh("models/jungle/grass_blade.obj")
-        self.mesh.name = "GrassField"
-
         self.mesh.recalculate_normals()
 
         glEnableClientState(GL_VERTEX_ARRAY)
@@ -41,16 +38,12 @@ class GrassField:
         glBufferData(GL_ARRAY_BUFFER, self.mesh.normals, GL_STATIC_DRAW)
 
         self.albedo = Texture.Load("textures/Grass/color.jpg")
-        self.opacity = Texture.Load("textures/Grass/opacity.jpg")        
+        self.opacity = Texture.Load("textures/Grass/opacity.jpg")
 
         self.camera = camera
         self.sun = light
-        self.started = time.time()
 
-    def get_time(self):
-        return time.time() - self.started
-
-    def draw(self, shader):
+    def draw(self, shader, time):
         # both sided drawing
         glDisable(GL_CULL_FACE)
 
@@ -58,7 +51,7 @@ class GrassField:
 
         glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
         glUniformMatrix4fv(shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
-        glUniform1f(shader.get_keyword("time"), self.get_time())
+        glUniform1f(shader.get_keyword("time"), time)
 
         glUniform3fv(shader.get_keyword("sunPos"), 1, self.sun.transform.position)
         glUniform3fv(shader.get_keyword("sunDirection"), 1, -self.sun.transform.position)

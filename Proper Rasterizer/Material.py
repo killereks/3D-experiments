@@ -31,6 +31,7 @@ class Material:
         self.face_type = FaceTypes.CULL_BACK
 
         self.tiling = np.array([1,1])
+        self.tiling_speed = np.array([0,0],"f")
 
         self.name = "default"
 
@@ -61,6 +62,7 @@ class Material:
 
         # material uniforms
         glUniform2fv(shader.get_keyword("tiling"), 1, self.tiling)
+        glUniform2fv(shader.get_keyword("tiling_speed"), 1, np.array(self.tiling_speed, "f"))
 
         glUniform1f(shader.get_keyword("Ka"), self.Ka)
         glUniform1f(shader.get_keyword("Kd"), self.Kd)

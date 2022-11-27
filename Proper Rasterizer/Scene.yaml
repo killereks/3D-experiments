@@ -43,8 +43,6 @@ Materials:
   treeMat:
     textures:
       _MainTex: textures/tree/tree_albedo.png
-      _NormalMap: textures/tree/tree_normal.png
-      _MaskMap: textures/tree/tree_mask.png
     tiling: [1,1]
     ambient: 0.2
     diffuse: 1.0
@@ -55,11 +53,7 @@ Materials:
     illumination: 0
   groundMat:
     textures:
-      _MainTex: textures/Ground/Ground_Albedo.jpg
-      _NormalMap: textures/Ground/Ground_Normal.jpg
-      _RoughnessMap: textures/Ground/Ground_Roughness.jpg
-      _DisplacementMap: textures/Ground/Ground_Displacement.jpg
-      _AmbientOcclusionMap: textures/Ground/Ground_AO.jpg
+      _MainTex: textures/Ground/color.jpg
     tiling: [20,20]
     ambient: 0.2
     diffuse: 1.0
@@ -68,58 +62,27 @@ Materials:
     opticalDensity: 0.0
     dissolve: 1.0
     illumination: 0
+  waterMat:
+    textures:
+      _MainTex: textures/water.png
+    tiling: [50,50]
+    tiling_speed: [0.1,0.1]
+    ambient: 0.2
+    diffuse: 0.2
+    specular: 0.4
+    specularExponent: 0.0
+    opticalDensity: 0.0
+    dissolve: 1.0
+    illumination: 0
 
 Meshes:
-  model2:
-    path: models/monkey/monkey.obj
-    material: mat0
-    position: [5, 0, 0]
-    rotation: [0, 0, 0]
-    scale: [1, 1, 1]
-    recalculateNormals: true
-    isIcon: true
-    scripts:
-      - RotateOverTime
-  lightIcon:
-    path: models/quad/quad.obj
-    material: mat2
-    position: [0, 2, 0]
-    rotation: [-90, 180, 0]
-    scale: [10, 10, 10]
-    recalculateNormals: true
-    isIcon: true
-  sphere:
-    path: models/random/sphere.obj
-    material: mat1
-    position: [-5, 3, 0]
-    rotation: [0, 0, 0]
-    scale: [1, 1, 1]
-    recalculateNormals: true
-  cube:
-    path: models/skybox.obj
-    material: mat0
-    position: [-5, 0, 0]
-    rotation: [0, 0, 0]
-    scale: [1, 1, 1]
-    recalculateNormals: true
-    scripts:
-      - RotateOverTime
-  bars:
-    path: models/bars.obj
-    material: mat0
-    position: [20, 3, 0]
-    rotation: [0, 70, 0]
-    scale: [5, 5, 5]
-    recalculateNormals: true
-    scripts:
-      - ScaleAnimation
   ground:
     path: models/jungle/divided_quad.obj
     material: groundMat
     position: [0, 0, 0]
     rotation: [0, 0, 0]
     scale: [100, 100, 100]
-    recalculateNormals: true
+    recalculateNormals: false
     one_time_scripts:
       - ProceduralTerrain
   tree:
@@ -128,4 +91,12 @@ Meshes:
     position: [0, 2, 0]
     rotation: [0, 0, 0]
     scale: [1, 1, 1]
+    recalculateNormals: true
+  
+  water:
+    path: models/quad/quad.obj
+    material: waterMat
+    position: [0, -1, 0]
+    rotation: [0, 0, 0]
+    scale: [300, 300, 300]
     recalculateNormals: true

@@ -19,7 +19,8 @@ uniform samplerCube _Skybox;
 
 uniform sampler2D shadowMap;
 
-uniform vec2 tiling = vec2(10.0, 10.0);
+uniform vec2 tiling = vec2(1.0, 1.0);
+uniform vec2 tiling_speed = vec2(0.0, 0.0);
 
 uniform vec3 lightPos;
 uniform vec3 viewDir;
@@ -131,7 +132,7 @@ vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 spe
 }
 
 void main(){
-    vec2 uv = TexCoords * tiling;
+    vec2 uv = TexCoords * tiling + tiling_speed * time;
 
     // PBR shading
     vec3 albedo = texture(_MainTex, uv).rgb;
@@ -157,7 +158,7 @@ void main(){
     vec3 skyColor = texture(_Skybox, reflectDir).rgb;
     color = mix(color, skyColor, 0.0);*/
 
-    if (alpha < 0.5) discard;
+    //if (alpha < 0.5) discard;
 
     FragColor = vec4(color, 1.0);
 }

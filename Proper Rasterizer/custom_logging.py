@@ -14,7 +14,7 @@ WARNING_COLOR = '\033[93m'
 ERROR_COLOR = '\033[91m'
 CRITICAL_COLOR = '\033[95m'
 
-def LOG(msg:str, level:float=0):
+def LOG(msg:str, level:float=0, override=False):
     """
     Logs a message to the console.
     Helpful for debugging, as it prints it with color.
@@ -44,4 +44,7 @@ def LOG(msg:str, level:float=0):
 
     timestamp = "[" + timestamp + "] "
 
-    print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m')
+    if override:
+        print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m', end="\r")
+    else:
+        print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m')

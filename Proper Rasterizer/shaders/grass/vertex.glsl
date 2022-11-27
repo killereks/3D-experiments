@@ -107,7 +107,7 @@ mat4 CreateModelMatrix(vec3 pos, float rotation, vec3 scale){
 void main(){
     vec2 id = vec2(gl_InstanceID / 25, gl_InstanceID / 1000);
 
-    float size = 50.0;
+    float size = 200.0;
 
     vec3 pos = vec3(random21(id) * size - size * 0.5, 0.0, random21(id + random21(id)) * size - size * 0.5);
 
