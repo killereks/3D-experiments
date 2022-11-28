@@ -20,13 +20,18 @@ uniform float time;
 #define USE_ACES 1
 #define USE_VIGNETTE 1
 
-#define USE_VOLUMETRIC_LIGHT 0
+#define USE_VOLUMETRIC_LIGHT 1
 #define VL_STEP_COUNT 64.0
 #define VL_DISTANCE 75.0
 
 #define USE_FILM_GRAIN 0
 #define FILM_GRAIN_INTENSITY 0.1
 #define FILM_GRAIN_SCANLINE 1
+
+#define USE_SATURATION 1
+#define SATURATION 1.3
+
+#define USE_GAMMA 0
 
 #define PI 3.1415926535897932384626433832795
 
@@ -157,6 +162,15 @@ vec3 FilmGrain(vec3 color, vec2 uv){
     return color;
 }
 
+vec3 Saturation(vec3 color){
+    float luma = dot(color, vec3(0.2126729, 0.7151522, 0.0721750));
+    return vec3(luma) + vec3(SATURATION) * (color - vec3(luma));
+}
+
+vec3 Gamma(vec3 color){
+    return pow(color, vec3(1.0 / 2.2));
+}
+
 void main(){
     vec2 UV = Position;
     vec2 TexCoords = Position * 0.5 + 0.5;
@@ -174,6 +188,14 @@ void main(){
 
     # if USE_ACES
         color = ACES(color);
+    # endif
+
+    # if USE_SATURATION
+        color = Saturation(color);
+    # endif
+
+    # if USE_GAMMA
+        color = Gamma(color);
     # endif
     
     # if USE_VIGNETTE
