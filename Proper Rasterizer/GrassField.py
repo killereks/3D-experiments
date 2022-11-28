@@ -58,8 +58,8 @@ class GrassField:
 
         shader.use()
 
-        glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
         glUniformMatrix4fv(shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
+        glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
         glUniform1f(shader.get_keyword("time"), time)
 
         glUniform3fv(shader.get_keyword("sunPos"), 1, self.sun.transform.position)

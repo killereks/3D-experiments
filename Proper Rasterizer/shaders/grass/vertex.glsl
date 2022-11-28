@@ -158,7 +158,9 @@ void main(){
     float noiseScale = pNoise(worldPos.xz * 2.0 + time * 10.0, 10) * 1.0;
     float windTurbulence = pNoise(worldPos.xz + time * 25.0, 10) * 0.1;
 
-    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * vUV.y;// * vUV.y;
+    float heightInfluence = scale / 15.0;
+
+    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * heightInfluence * max(vUV.y-0.1, 0.0);// * vUV.y;
 
     if (isShadowMap){
         gl_Position = lightSpaceMatrix * worldPos;

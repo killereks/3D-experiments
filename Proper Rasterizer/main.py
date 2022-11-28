@@ -40,8 +40,8 @@ initialized = False
 
 class Scene:
     def __init__(self):
-        self.width = 1024
-        self.height = 768
+        self.width = 1920#1024
+        self.height = 1080#768
 
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.OPENGL | pygame.DOUBLEBUF, 32)
 
@@ -54,7 +54,8 @@ class Scene:
         aspect = self.width / self.height
 
         self.camera = Camera(80, aspect, 0.1, 500)
-        self.camera.transform.translate(0, -2, -5)
+        # handpicked location for the camera
+        self.camera.transform.position = np.array([151.1606,-36.485424,-34.45971], "f")
 
         self.depthMapFBO = glGenFramebuffers(1)
         self.depthMap = glGenTextures(1)

@@ -22,9 +22,9 @@ uniform float time;
 
 #define USE_VOLUMETRIC_LIGHT 1
 #define VL_STEP_COUNT 64.0
-#define VL_DISTANCE 50.0
+#define VL_DISTANCE 75.0
 
-#define USE_FILM_GRAIN 0
+#define USE_FILM_GRAIN 1
 #define FILM_GRAIN_INTENSITY 0.1
 #define FILM_GRAIN_SCANLINE 1
 
@@ -114,6 +114,7 @@ vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
     float lum = 0.0;
 
     float camDepth = lineariseDepth(texture(cameraDepthMap, uv).r);
+    
     vec3 disp = normalize(camFwd + camUp * screenPos.y + camRight * screenPos.x);
     float stepSize = 1.0 / VL_STEP_COUNT;
     float sampleDepth = random(uv + time * 0.01) * stepSize * VL_DISTANCE;
@@ -160,27 +161,6 @@ void main(){
     vec2 UV = Position;
     vec2 TexCoords = Position * 0.5 + 0.5;
     vec3 albedo = texture(screenTexture, TexCoords).rgb;
-    //color = texture(screenTexture, TexCoords);
-
-    //float lum = 
-
-    // float amount = 0.4;
-    // float radius = 0.4;
-
-    // // vignete
-    // float distance = length(TexCoords - vec2(0.5, 0.5));
-    // float vignete = smoothstep(0.8, radius, distance);
-
-    // mat3x3 rgb2aces = mat3x3(
-    //     1.0498110175, 0.0000000000, -0.0000974845,
-    //     -0.4959030231, 1.3733130458, 0.0982400361,
-    //     0.0000000000, 0.0000000000, 0.9912520182
-    // );
-
-    // color = texture(screenTexture, TexCoords);
-    // color.rgb *= rgb2aces;
-    
-    // volumetric lighting
     
     vec3 color = albedo;
 

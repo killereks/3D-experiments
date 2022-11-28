@@ -92,7 +92,7 @@ void main(){
     // set fragment color
     //FragColor = vec4(grassColor, 1.0);
 
-    //if (opacity < 0.5) discard;
+    if (opacity < 0.5) discard;
 
     FragColor = vec4(albedo * shadow * normalLighting, 1.0);
 }

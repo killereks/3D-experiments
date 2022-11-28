@@ -11,9 +11,7 @@ out vec4 FragColor;
 uniform float time;
 
 uniform sampler2D _MainTex;
-uniform sampler2D _NormalMap;
 uniform sampler2D _RoughnessMap;
-uniform sampler2D _DisplacementMap;
 
 uniform samplerCube _Skybox;
 
@@ -141,9 +139,7 @@ void main(){
 
     // PBR shading
     vec3 albedo = texture(_MainTex, uv).rgb;
-    vec3 normal = texture(_NormalMap, uv).rgb;
     float roughness = texture(_RoughnessMap, uv).r;
-    vec3 displacement = texture(_DisplacementMap, uv).rgb;
 
     float alpha = texture(_MainTex, uv).a;
 

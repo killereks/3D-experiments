@@ -62,14 +62,15 @@ def ProceduralTerrain(obj):
     scaleY = obj.transform.scale[1]
     LOG(f"Island Generated! Noise-Bounds: {boundsY[0]} - {boundsY[1]}. Height-Bounds: {heightBounds[0]*scaleY} - {heightBounds[1]*scaleY}", LogLevel.WARNING)
 
-    """# save heights to image
+    # save heights to image
     heights = np.array(heights)
     # normalize heights
     heights = (heights - boundsY[0]) / (boundsY[1] - boundsY[0])
     heights = (heights * 255).astype(np.uint8)
 
     img = Image.fromarray(heights, 'L')
-    img.save("heightmap.png")"""
+    img.save("textures/heightmap.png")
+    LOG("Heightmap saved to heightmap.png", LogLevel.WARNING)
 
     obj.recalculate_normals()
 

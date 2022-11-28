@@ -66,8 +66,7 @@ class PostProcessing:
         glUniform3fv(self.shader.get_keyword("lightPos"), 1, self.sun.transform.position)
 
         # normalized light direction towards origin
-        lightDir = -self.sun.transform.position / np.linalg.norm(self.sun.transform.position)
-        glUniform3fv(self.shader.get_keyword("lightDir"), 1, lightDir)
+        glUniform3fv(self.shader.get_keyword("lightDir"), 1, -self.sun.transform.position)
 
         glUniformMatrix4fv(self.shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
         glUniformMatrix4fv(self.shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)
