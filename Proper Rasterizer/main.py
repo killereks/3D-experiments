@@ -30,9 +30,13 @@ import yaml
 
 from custom_logging import LOG, LogLevel
 
+from PIL import Image
+
 start_time = time.time()
 
 pygame.init()
+
+initialized = False
 
 class Scene:
     def __init__(self):
@@ -61,7 +65,7 @@ class Scene:
         self.shadow_map_size = 4096
 
         self.sun = Light(np.array([1,1,1],"f"),1)
-        self.sun.transform.translate(5, 10, 0)
+        self.sun.transform.position = np.array([30, 50, 30], "f")
 
         self.skybox = Skybox()
 
@@ -143,12 +147,13 @@ class Scene:
             mesh.draw()
 
     def shadow_map(self):
+        global initialized
         """
         Renders the scene from the light's perspective to a depth map.
         
         This is used to determine which fragments are in shadow.
         """
-        glCullFace(GL_FRONT)
+        #glCullFace(GL_FRONT)
 
         glBindTexture(GL_TEXTURE_2D, self.depthMap)
         glBindFramebuffer(GL_FRAMEBUFFER, self.depthMapFBO)
@@ -166,10 +171,24 @@ class Scene:
         glClear(GL_DEPTH_BUFFER_BIT)
         
         self.draw_scene(shadow_map_shader)
+        tree_field.draw(shadow_map_trees_shader, current_time(), True)
+
+        # save depthMap to file
+        if not initialized:
+            data = glReadPixels(0, 0, self.shadow_map_size, self.shadow_map_size, GL_DEPTH_COMPONENT, GL_FLOAT)
+            data = np.flip(data, 0)
+            data = np.flip(data, 1)
+            data = np.reshape(data, (self.shadow_map_size, self.shadow_map_size))
+            data = data * 255
+            data = data.astype(np.uint8)
+            im = Image.fromarray(data)
+            im.save("depthMap.png")
+            LOG(f"Saved depthMap to file", 3)
+            initialized = True
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-        glCullFace(GL_BACK)
+        #glCullFace(GL_BACK)
 
     def camera_depth(self):
         """
@@ -261,7 +280,6 @@ class Scene:
         :param dt: Delta time, the time since the last frame, used to make updates framerate independent
         """
         #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 2, np.sin(current_time()) * 10])
-        self.sun.transform.position = np.array([15, 20, 5])
 
         for mesh in self.meshes:
             if mesh.isIcon:
@@ -311,7 +329,8 @@ class Scene:
 
             self.draw_scene(lit_shader)
 
-            grass_field.draw(grass_shader, current_time())
+            grass_field.draw(grass_shader, current_time(), False)
+            tree_field.draw(grass_shader, current_time(), False)
 
             self.skybox.draw(skybox_shader, self.camera)
             self.postprocessing.after_draw()
@@ -470,12 +489,31 @@ skybox_shader = Shader.Shader("shaders/skybox/vertex.glsl", "shaders/skybox/frag
 postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/postprocess/fragment.glsl")
 camera_depth_shader = Shader.Shader("shaders/camera/camera_depth_vertex.glsl", "shaders/camera/camera_depth_fragment.glsl")
 grass_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/grass/fragment.glsl")
+shadow_map_trees_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
 
 scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 
 scene.load_scene("scene.yaml")
 
+# calculated manually inside perlin noise generator for a given seed.
+worldYBounds = np.array([-40.0, 22.067507434821415])
+
 grass_field = GrassField()
-grass_field.setup(scene.camera, scene.sun)
+grass_field.setup(scene.camera, 
+                  scene.sun,
+                  worldYBounds,
+                  blender.load_mesh("models/jungle/grass_blade.obj"),
+                  Texture.Load("textures/grass/color.jpg"),
+                  Texture.Load("textures/grass/opacity.jpg"),
+                  500_000)
+
+tree_field = GrassField()
+tree_field.setup(scene.camera,
+                    scene.sun,
+                    worldYBounds,
+                    blender.load_mesh("models/jungle/tree_low.obj"),
+                    Texture.Load("textures/tree/tree_albedo.png"),
+                    None,
+                    1000)
 
 scene.run()

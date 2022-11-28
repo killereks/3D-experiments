@@ -10,11 +10,13 @@ from Texture import Texture
 import time
 
 class GrassField:
-    def setup(self, camera, light, heightMapTex):
-        self.mesh = blender.load_mesh("models/jungle/grass_blade.obj")
+    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, amount: int):
+        self.mesh = mesh
         self.mesh.recalculate_normals()
 
         self.heightTexture = Texture.Load("textures/heightmap.png")
+
+        self.worldYBounds = worldYBounds
 
         glEnableClientState(GL_VERTEX_ARRAY)
 
@@ -39,13 +41,15 @@ class GrassField:
         glBindBuffer(GL_ARRAY_BUFFER, self.nbo)
         glBufferData(GL_ARRAY_BUFFER, self.mesh.normals, GL_STATIC_DRAW)
 
-        self.albedo = Texture.Load("textures/Grass/color.jpg")
-        self.opacity = Texture.Load("textures/Grass/opacity.jpg")
+        self.albedo = albedo
+        self.opacity = opacity
+
+        self.amount = amount
 
         self.camera = camera
         self.sun = light
 
-    def draw(self, shader, time):
+    def draw(self, shader, time, isShadowMap):
         # both sided drawing
         glDisable(GL_CULL_FACE)
 
@@ -58,14 +62,21 @@ class GrassField:
         glUniform3fv(shader.get_keyword("sunPos"), 1, self.sun.transform.position)
         glUniform3fv(shader.get_keyword("sunDirection"), 1, -self.sun.transform.position)
 
+        # lightSpaceMatrix
+        glUniformMatrix4fv(shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightSpaceMatrix())
+        glUniform1i(shader.get_keyword("isShadowMap"), isShadowMap)
+
         self.albedo.use(0)
         glUniform1i(shader.get_keyword("albedoMap"), 0)
 
-        self.opacity.use(1)
-        glUniform1i(shader.get_keyword("opacityMap"), 1)
+        if self.opacity != None:
+            self.opacity.use(1)
+            glUniform1i(shader.get_keyword("opacityMap"), 1)
 
         self.heightTexture.use(2)
         glUniform1i(shader.get_keyword("heightMap"), 2)
+        
+        glUniform2fv(shader.get_keyword("worldYBounds"), 1, self.worldYBounds)
 
         #glActiveTexture(GL_TEXTURE0)
         #glBindTexture(GL_TEXTURE_2D, self.heightTexture)
@@ -89,7 +100,7 @@ class GrassField:
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, None)
         
         # draw grass
-        glDrawElementsInstanced(GL_TRIANGLES, len(self.mesh.faces) * 3, GL_UNSIGNED_INT, None, 1_000_000)
+        glDrawElementsInstanced(GL_TRIANGLES, len(self.mesh.faces) * 3, GL_UNSIGNED_INT, None, self.amount)
 
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)

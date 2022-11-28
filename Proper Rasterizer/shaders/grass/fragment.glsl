@@ -27,6 +27,10 @@ float random21(vec2 id){
     return fract(sin(sn) * c);
 }
 
+float remap(float value, float min1, float max1, float min2, float max2){
+    return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
 void main(){
     // 567D46
     vec3 grassColor1 = vec3(0.337, 0.490, 0.271);
@@ -46,7 +50,7 @@ void main(){
     vec3 albedo = texture(albedoMap, uv).rgb;
     float opacity = texture(opacityMap, uv).r;
 
-    vec3 height = texture(heightMap, uv).rgb;
+    float lighting = max(0.0, dot(normal, -normalize(sunDirection)));
 
     // calculate light intensity
     //float lightIntensity = dot(normal, -sunDirection);
@@ -55,7 +59,7 @@ void main(){
     // set fragment color
     //FragColor = vec4(grassColor, 1.0);
 
-    if (opacity < 0.5) discard;
+    //if (opacity < 0.5) discard;
 
-    FragColor = vec4(albedo, 1.0);
+    FragColor = vec4(albedo * lighting, 1.0);
 }

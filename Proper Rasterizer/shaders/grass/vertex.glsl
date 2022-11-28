@@ -9,6 +9,11 @@ uniform mat4 view;
 
 uniform sampler2D heightMap;
 
+uniform mat4 lightSpaceMatrix;
+uniform bool isShadowMap;
+
+uniform vec2 worldYBounds;
+
 uniform float time;
 
 mat4 model;
@@ -113,24 +118,28 @@ float remap(float value, float min1, float max1, float min2, float max2){
 void main(){
     vec2 id = vec2(gl_InstanceID / 25, gl_InstanceID / 1000);
 
-    float size = 200.0;
+    float size = 400.0;
     float halfSize = size * 0.5;
 
-    float x = random21(id);
-    float z = random21(id + random21(id));
+    float spawnRadius = 0.6;
+
+    float x = random21(id) * spawnRadius + spawnRadius * 0.5;
+    float z = random21(id + random21(id)) * spawnRadius + spawnRadius * 0.5;
 
     // map from -size/2 - size/2 to 0 - heightMapSize
     float heightMapSize = textureSize(heightMap, 0).x;
-    float worldScale = 0.2;
-    vec2 heightMapUV = vec2(remap(x, -halfSize, halfSize, 0.0, 1.0), remap(z, -halfSize, halfSize, 0.0, 1.0));
+    
+    vec2 heightMapUV = vec2(x,1.0-z);
 
     // get height from heightmap
-    float height = texture(heightMap, heightMapUV).r * worldScale + 0.5;
+    //float height = remap(texture(heightMap, heightMapUV).r, 0.0, 1.0, worldYBounds.x, worldYBounds.y);
+    float height = remap(texture(heightMap, heightMapUV).r, 0.0, 1.0, worldYBounds.x, worldYBounds.y);
 
-    vec3 pos = vec3(x,height,z) * size - halfSize;
+    vec3 pos = vec3(x,0.0,z) * size - halfSize;
+    pos.y = height;
 
     float rotation = random21(id) * 6.28318530718;
-    float scale = rand(id) * 4.0 + 3.0;
+    float scale = rand(id) * 10.0 + 5.0;
 
     mat4 model = CreateModelMatrix(pos, rotation, vec3(scale));
 
@@ -144,12 +153,16 @@ void main(){
     float noiseScale = pNoise(worldPos.xz * 2.0 + time * 10.0, 10) * 1.0;
     float windTurbulence = pNoise(worldPos.xz + time * 25.0, 10) * 0.1;
 
-    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * vUV.y * vUV.y;
-    
-    gl_Position = projection * view * worldPos;
+    worldPos.xyz += windDirection * (noiseScale + windTurbulence) * vUV.y;// * vUV.y;
+
+    if (isShadowMap){
+        gl_Position = lightSpaceMatrix * worldPos;
+    } else {
+        gl_Position = projection * view * worldPos;
+    }
 
     position = pos;
-    uv = vec2(vUV.x, 1.0 - vUV.y);
+    uv = vec2(vUV.x, vUV.y);
     // transform normals to world space
     // Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     normal = normalize(transpose(inverse(mat3(model))) * inNormal);

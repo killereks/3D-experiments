@@ -75,23 +75,7 @@ Materials:
     dissolve: 1.0
     illumination: 0
 
-Meshes:
-  tree:
-    path: models/jungle/tree.obj
-    material: treeMat
-    position: [0, 2, 0]
-    rotation: [0, 0, 0]
-    scale: [1, 1, 1]
-    recalculateNormals: true
-  
-  water:
-    path: models/quad/quad.obj
-    material: waterMat
-    position: [0, -1, 0]
-    rotation: [0, 0, 0]
-    scale: [300, 300, 300]
-    recalculateNormals: true
-
+Meshes:  
   ground:
     path: models/jungle/divided_quad.obj
     material: groundMat
@@ -101,3 +85,12 @@ Meshes:
     recalculateNormals: false
     one_time_scripts:
       - ProceduralTerrain
+    
+  water:
+    path: models/quad/quad.obj
+    material: waterMat
+    position: [0, -1, 0]
+    rotation: [0, 0, 0]
+    scale: [300, 300, 300]
+    recalculateNormals: true
+    excludeInShadowMap: true

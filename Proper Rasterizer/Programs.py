@@ -23,6 +23,7 @@ def ProceduralTerrain(obj):
     noise = PerlinNoise(octaves=4, seed=10)
 
     boundsY = np.zeros(2)
+    heightBounds = np.zeros(2)
 
     size = int(np.sqrt(obj.vertices.shape[0]))
     
@@ -47,6 +48,7 @@ def ProceduralTerrain(obj):
         height = noise_value - dist * 0.15
 
         boundsY = np.array([min(boundsY[0], height), max(boundsY[1], height)])
+        heightBounds = np.array([min(heightBounds[0], height), max(heightBounds[1], height)])
 
         #heights[indexX, indexY] = height
 
@@ -57,7 +59,8 @@ def ProceduralTerrain(obj):
         # move the vertex up and down
         obj.vertices[i][1] = height
 
-    LOG(f"Island Generated! Y-Bounds: {boundsY[0]} - {boundsY[1]}", LogLevel.WARNING, True)
+    scaleY = obj.transform.scale[1]
+    LOG(f"Island Generated! Noise-Bounds: {boundsY[0]} - {boundsY[1]}. Height-Bounds: {heightBounds[0]*scaleY} - {heightBounds[1]*scaleY}", LogLevel.WARNING)
 
     """# save heights to image
     heights = np.array(heights)

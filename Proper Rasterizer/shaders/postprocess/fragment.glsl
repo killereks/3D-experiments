@@ -20,7 +20,7 @@ uniform float time;
 #define USE_ACES 1
 #define USE_VIGNETTE 1
 
-#define USE_VOLUMETRIC_LIGHT 0
+#define USE_VOLUMETRIC_LIGHT 1
 #define VL_STEP_COUNT 64.0
 #define VL_DISTANCE 50.0
 
@@ -127,17 +127,17 @@ vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
 
         if (sampleDepth > camDepth) break;
 
-        //lum += shadow * stepSize;
-        lum += shadow;
+        lum += shadow * stepSize;
+        //lum += shadow;
 
         sampleDepth += stepSize * VL_DISTANCE;
 
-        iters++;
+        //iters++;
     }
 
-    lum = lum / iters;
+    //lum = lum / iters;
 
-    lum = pow(lum, 2.0);
+    //lum = pow(lum, 2.0);
     
     return color * lum;
 }
