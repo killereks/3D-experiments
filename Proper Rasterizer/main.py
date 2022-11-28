@@ -514,6 +514,6 @@ tree_field.setup(scene.camera,
                     blender.load_mesh("models/jungle/tree_low.obj"),
                     Texture.Load("textures/tree/tree_albedo.png"),
                     None,
-                    1000)
+                    50)
 
 scene.run()

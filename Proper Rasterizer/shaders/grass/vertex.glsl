@@ -116,12 +116,12 @@ float remap(float value, float min1, float max1, float min2, float max2){
 }
 
 void main(){
-    vec2 id = vec2(gl_InstanceID / 25, gl_InstanceID / 1000);
+    vec2 id = vec2(gl_InstanceID * 2363.46, gl_InstanceID * 235.14);
 
     float size = 400.0;
     float halfSize = size * 0.5;
 
-    float spawnRadius = 0.6;
+    float spawnRadius = 0.5; // percentage 0-1
 
     float x = random21(id) * spawnRadius + spawnRadius * 0.5;
     float z = random21(id + random21(id)) * spawnRadius + spawnRadius * 0.5;

@@ -138,8 +138,11 @@ vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
     //lum = lum / iters;
 
     //lum = pow(lum, 2.0);
+
+    // clamp lum
+    lum = clamp(lum, 0.0, 0.2);
     
-    return color * lum;
+    return color + lum;
 }
 
 vec3 FilmGrain(vec3 color, vec2 uv){
