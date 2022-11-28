@@ -471,11 +471,11 @@ postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/p
 camera_depth_shader = Shader.Shader("shaders/camera/camera_depth_vertex.glsl", "shaders/camera/camera_depth_fragment.glsl")
 grass_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/grass/fragment.glsl")
 
-grass_field = GrassField()
-grass_field.setup(scene.camera, scene.sun)
-
 scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 
 scene.load_scene("scene.yaml")
+
+grass_field = GrassField()
+grass_field.setup(scene.camera, scene.sun)
 
 scene.run()

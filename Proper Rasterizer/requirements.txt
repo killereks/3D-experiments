@@ -3,3 +3,4 @@ pygame==2.1.2
 numpy
 PyYAML==6.0
 perlin-noise==1.12
+Pillow==9.2.0

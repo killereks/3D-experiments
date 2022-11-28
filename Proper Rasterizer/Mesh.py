@@ -32,7 +32,7 @@ class Mesh:
 
         self.name = "unnamed"
 
-        LOG(f"Bounds (including scale): {self.bounds * self.transform.scale}")
+        LOG(f"Bounds (including scale): {self.bounds[0] * self.transform.scale} - {self.bounds[1] * self.transform.scale}")
 
         self.isIcon = False
 

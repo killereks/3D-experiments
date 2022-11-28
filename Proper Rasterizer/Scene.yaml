@@ -76,15 +76,6 @@ Materials:
     illumination: 0
 
 Meshes:
-  ground:
-    path: models/jungle/divided_quad.obj
-    material: groundMat
-    position: [0, 0, 0]
-    rotation: [0, 0, 0]
-    scale: [100, 100, 100]
-    recalculateNormals: false
-    one_time_scripts:
-      - ProceduralTerrain
   tree:
     path: models/jungle/tree.obj
     material: treeMat
@@ -100,3 +91,13 @@ Meshes:
     rotation: [0, 0, 0]
     scale: [300, 300, 300]
     recalculateNormals: true
+
+  ground:
+    path: models/jungle/divided_quad.obj
+    material: groundMat
+    position: [0, 0, 0]
+    rotation: [0, 0, 0]
+    scale: [200, 200, 200]
+    recalculateNormals: false
+    one_time_scripts:
+      - ProceduralTerrain

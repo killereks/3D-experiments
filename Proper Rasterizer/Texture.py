@@ -3,6 +3,10 @@ import pygame as pg
 
 from custom_logging import LOG, LogLevel
 
+from PIL import Image
+
+import numpy as np
+
 class Texture:
     def __init__(self):
         self.texture = None
@@ -63,8 +67,21 @@ class Texture:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, heights)
+        # heights is 1 channel, we need 3 channels
+        data = []
+        for i in range(len(heights)):
+            data.append(heights[i])
+            data.append(heights[i])
+            data.append(heights[i])
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, data)
         glGenerateMipmap(GL_TEXTURE_2D)
+        
+        # save texture to image
+        heights = np.array(heights)
+        heights = heights.reshape((width, height))
+        img = Image.fromarray(heights, 'L')
+        img.save("heightmap.png")
 
         tex.width = width
         tex.height = height
@@ -101,3 +118,20 @@ class Texture:
         
         glActiveTexture(GL_TEXTURE0 + index)
         glBindTexture(GL_TEXTURE_2D, self.texture)
+
+    def Save(self, filepath: str, format: str, opengl_format: int):
+        """
+        Save the texture to a file
+
+        :param filepath: The path to the file
+        """
+        
+        # read current texture pixels
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        data = glReadPixels(0, 0, self.width, self.height, opengl_format, GL_UNSIGNED_BYTE)
+
+        #print(data)
+
+        # create image
+        image = Image.frombytes(format, (self.width, self.height), data)
+        image.save(filepath)

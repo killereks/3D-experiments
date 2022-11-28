@@ -10,9 +10,11 @@ from Texture import Texture
 import time
 
 class GrassField:
-    def setup(self, camera, light):
+    def setup(self, camera, light, heightMapTex):
         self.mesh = blender.load_mesh("models/jungle/grass_blade.obj")
         self.mesh.recalculate_normals()
+
+        self.heightTexture = Texture.Load("textures/heightmap.png")
 
         glEnableClientState(GL_VERTEX_ARRAY)
 
@@ -61,6 +63,9 @@ class GrassField:
 
         self.opacity.use(1)
         glUniform1i(shader.get_keyword("opacityMap"), 1)
+
+        self.heightTexture.use(2)
+        glUniform1i(shader.get_keyword("heightMap"), 2)
 
         #glActiveTexture(GL_TEXTURE0)
         #glBindTexture(GL_TEXTURE_2D, self.heightTexture)

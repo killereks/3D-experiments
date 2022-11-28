@@ -7,6 +7,7 @@ uniform vec3 sunDirection;
 
 uniform sampler2D albedoMap;
 uniform sampler2D opacityMap;
+uniform sampler2D heightMap;
 
 in vec3 position;
 in vec2 uv;
@@ -44,6 +45,8 @@ void main(){
 
     vec3 albedo = texture(albedoMap, uv).rgb;
     float opacity = texture(opacityMap, uv).r;
+
+    vec3 height = texture(heightMap, uv).rgb;
 
     // calculate light intensity
     //float lightIntensity = dot(normal, -sunDirection);
