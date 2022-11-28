@@ -39,6 +39,10 @@ uniform int illum; // illumination model
 
 #define SHADOW_ALPHA 0.4
 
+float random21(vec2 p){
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 float shadowCalc(float dotLightNormal, vec2 offset){
     float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
     vec3 pos = FragPosLightSpace.xyz * 0.5 + 0.5;
@@ -54,7 +58,8 @@ float softShadows(float dotLightNormal){
     int size = 2;
     for (int x = -size; x <= size; ++x) {
         for (int y = -size; y <= size; ++y) {
-            float pcfDepth = shadowCalc(dotLightNormal, vec2(x, y) * texelSize);
+            vec2 offset = vec2(x,y) * texelSize; //random21(vec2(x, y)) * texelSize;
+            float pcfDepth = shadowCalc(dotLightNormal, offset);
             shadow += pcfDepth;
         }
     }

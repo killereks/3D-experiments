@@ -15,12 +15,16 @@ uniform bool isShadowMap;
 uniform vec2 worldYBounds;
 
 uniform float time;
+uniform float spawnRadius;
 
 mat4 model;
 
 out vec3 position;
 out vec2 uv;
 out vec3 normal;
+
+out vec3 lightFragPos;
+
 flat out int m_ID;
 
 #define PHI 1.6180339887498948482045868343656381177203091798057628621354486227052604628189024497072072041893911374
@@ -33,7 +37,10 @@ float random21(vec2 id){
     highp float c = 43758.5453;
     highp float dt= dot(id.xy ,vec2(a,b));
     highp float sn= mod(dt,PI);
-    return fract(sin(sn) * c);
+    highp float val = fract(sin(sn) * c);
+
+    // make sure val is between 0-1
+    return abs(val);
 }
 
 vec3 random13(int id){
@@ -116,15 +123,13 @@ float remap(float value, float min1, float max1, float min2, float max2){
 }
 
 void main(){
-    vec2 id = vec2(gl_InstanceID * 2363.46, gl_InstanceID * 235.14);
+    vec2 id = vec2(gl_InstanceID * E * E, gl_InstanceID * PI);
 
     float size = 400.0;
     float halfSize = size * 0.5;
 
-    float spawnRadius = 0.5; // percentage 0-1
-
-    float x = random21(id) * spawnRadius + spawnRadius * 0.5;
-    float z = random21(id + random21(id)) * spawnRadius + spawnRadius * 0.5;
+    float x = remap(random21(id), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
+    float z = remap(random21(id + random21(id)), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
 
     // map from -size/2 - size/2 to 0 - heightMapSize
     float heightMapSize = textureSize(heightMap, 0).x;
@@ -138,8 +143,8 @@ void main(){
     vec3 pos = vec3(x,0.0,z) * size - halfSize;
     pos.y = height;
 
-    float rotation = random21(id) * 6.28318530718;
-    float scale = rand(id) * 10.0 + 5.0;
+    float rotation = random21(pos.xz) * PI * 2.0;
+    float scale = rand(id) * 20.0 + 5.0;
 
     mat4 model = CreateModelMatrix(pos, rotation, vec3(scale));
 
@@ -167,4 +172,6 @@ void main(){
     // Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     normal = normalize(transpose(inverse(mat3(model))) * inNormal);
     m_ID = gl_InstanceID;
+
+    lightFragPos = vec3(lightSpaceMatrix * worldPos);
 }

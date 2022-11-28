@@ -10,7 +10,7 @@ from Texture import Texture
 import time
 
 class GrassField:
-    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, amount: int):
+    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, amount: int, spawnRadius: float):
         self.mesh = mesh
         self.mesh.recalculate_normals()
 
@@ -45,9 +45,12 @@ class GrassField:
         self.opacity = opacity
 
         self.amount = amount
+        self.spawnRadius = spawnRadius
 
         self.camera = camera
         self.sun = light
+
+        self.shadowMap = None
 
     def draw(self, shader, time, isShadowMap):
         # both sided drawing
@@ -75,6 +78,12 @@ class GrassField:
 
         self.heightTexture.use(2)
         glUniform1i(shader.get_keyword("heightMap"), 2)
+
+        glActiveTexture(GL_TEXTURE3)
+        glBindTexture(GL_TEXTURE_2D, self.shadowMap)
+        glUniform1i(shader.get_keyword("shadowMap"), 3)
+
+        glUniform1f(shader.get_keyword("spawnRadius"), self.spawnRadius)
         
         glUniform2fv(shader.get_keyword("worldYBounds"), 1, self.worldYBounds)
 

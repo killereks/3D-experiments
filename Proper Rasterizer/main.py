@@ -53,7 +53,7 @@ class Scene:
 
         aspect = self.width / self.height
 
-        self.camera = Camera(80, aspect, 0.1, 250)
+        self.camera = Camera(80, aspect, 0.1, 500)
         self.camera.transform.translate(0, -2, -5)
 
         self.depthMapFBO = glGenFramebuffers(1)
@@ -366,11 +366,11 @@ class Scene:
             
             self.camera.rotate_local(rotY, rotX)
 
-        speed = 1.0 * dt
+        speed = 7.0 * dt
 
         # if holding left shift speed up
         if keys[pygame.K_LSHIFT]:
-            speed *= 15
+            speed *= 35
 
         if keys[pygame.K_w]:
             self.camera.transform.position += self.camera.forward() * speed
@@ -502,10 +502,12 @@ grass_field = GrassField()
 grass_field.setup(scene.camera, 
                   scene.sun,
                   worldYBounds,
-                  blender.load_mesh("models/jungle/grass_blade.obj"),
+                  blender.load_mesh("models/jungle/grass_high.obj"),
                   Texture.Load("textures/grass/color.jpg"),
                   Texture.Load("textures/grass/opacity.jpg"),
-                  500_000)
+                  500_000, 0.5)
+
+grass_field.shadowMap = scene.depthMap
 
 tree_field = GrassField()
 tree_field.setup(scene.camera,
@@ -514,6 +516,8 @@ tree_field.setup(scene.camera,
                     blender.load_mesh("models/jungle/tree_low.obj"),
                     Texture.Load("textures/tree/tree_albedo.png"),
                     None,
-                    50)
+                    50, 0.2)
+
+tree_field.shadowMap = scene.depthMap
 
 scene.run()

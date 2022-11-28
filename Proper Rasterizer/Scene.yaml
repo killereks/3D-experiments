@@ -1,45 +1,4 @@
 Materials:
-  mat0:
-    textures:
-      _MainTex: textures/checkerboard.png
-    tiling: [100, 100]
-
-    ambient: 0.2
-    diffuse: 0.8
-    specular: 1.0
-    specularExponent: 10.0
-    opticalDensity: 1.0
-    dissolve: 1.0
-    illumination: 2
-
-  mat1:
-    textures:
-      _MainTex: textures/Marble/Color.jpg
-      _NormalMap: textures/Marble/Normal.jpg
-      _RoughnessMap: textures/Marble/Roughness.jpg
-      _DisplacementMap: textures/Marble/Displacement.jpg
-    tiling: [1,1]
-
-    ambient: 0.2
-    diffuse: 0.8
-    specular: 1.0
-    specularExponent: 10.0
-    opticalDensity: 1.0
-    dissolve: 1.0
-    illumination: 2
-  
-  mat2:
-    textures:
-      _MainTex: textures/icons/light_icon.png
-    tiling: [1,1]
-    
-    ambient: 1.0
-    diffuse: 0.0
-    specular: 0.0
-    specularExponent: 0.0
-    opticalDensity: 0.0
-    dissolve: 0.0
-    illumination: 0
   treeMat:
     textures:
       _MainTex: textures/tree/tree_albedo.png
@@ -64,7 +23,7 @@ Materials:
     illumination: 0
   waterMat:
     textures:
-      _MainTex: textures/water.png
+      _MainTex: textures/water_high.png
     tiling: [50,50]
     tiling_speed: [0.1,0.1]
     ambient: 0.2

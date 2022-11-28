@@ -40,7 +40,7 @@ out vec4 FragColor;
 
 float lineariseDepth(float depth){
     float near = 0.1;
-    float far = 250.0;
+    float far = 500.0;
     return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
 }
 
@@ -125,7 +125,7 @@ vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
 
         float shadow = worldToShadow(pos);
 
-        if (sampleDepth > camDepth) break;
+        if (sampleDepth >= camDepth) break;
 
         lum += shadow * stepSize;
         //lum += shadow;
@@ -137,7 +137,6 @@ vec3 VolumetricLighting(vec3 color, vec2 uv, vec2 screenPos){
 
     //lum = lum / iters;
 
-    //lum = pow(lum, 2.0);
 
     // clamp lum
     lum = clamp(lum, 0.0, 0.2);
@@ -204,7 +203,7 @@ void main(){
 
     //vec3 pos = getWorldPosition(TexCoords);
 
-    //float depth = texture(cameraDepthMap, TexCoords).r;
+    float depth = texture(cameraDepthMap, TexCoords).r;
     //FragColor.rgb = vec3(depth);
 
     //FragColor = vec4(pos, 1.0);
