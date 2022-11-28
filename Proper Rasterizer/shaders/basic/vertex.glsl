@@ -17,7 +17,11 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpaceMatrix; // world space -> light space
 
+out vec3 fragWorldPos;
+
 void main(){
+    fragWorldPos = vec3(model * vec4(vPos, 1.0));
+
     gl_Position = projection * view * model * vec4(vPos, 1.0);
 
     Normal = normalize(transpose(inverse(mat3(model))) * vNormal);

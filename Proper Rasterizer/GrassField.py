@@ -76,6 +76,8 @@ class GrassField:
             self.opacity.use(1)
             glUniform1i(shader.get_keyword("opacityMap"), 1)
 
+        glUniform1i(shader.get_keyword("useOpacityMap"), self.opacity != None)
+
         self.heightTexture.use(2)
         glUniform1i(shader.get_keyword("heightMap"), 2)
 

@@ -20,11 +20,11 @@ uniform float time;
 #define USE_ACES 1
 #define USE_VIGNETTE 1
 
-#define USE_VOLUMETRIC_LIGHT 1
+#define USE_VOLUMETRIC_LIGHT 0
 #define VL_STEP_COUNT 64.0
 #define VL_DISTANCE 75.0
 
-#define USE_FILM_GRAIN 1
+#define USE_FILM_GRAIN 0
 #define FILM_GRAIN_INTENSITY 0.1
 #define FILM_GRAIN_SCANLINE 1
 

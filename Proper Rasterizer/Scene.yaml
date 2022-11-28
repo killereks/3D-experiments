@@ -24,11 +24,25 @@ Materials:
   waterMat:
     textures:
       _MainTex: textures/water_high.png
+      _RoughnessMap: textures/water_high_roughness.png
     tiling: [50,50]
-    tiling_speed: [0.1,0.1]
+    tiling_speed: [0,0]
     ambient: 0.2
     diffuse: 0.2
-    specular: 0.4
+    specular: 1.0
+    specularExponent: 32.0
+    opticalDensity: 0.0
+    dissolve: 1.0
+    illumination: 0
+
+  sunIconMat:
+    textures:
+      _MainTex: textures/icons/lightbulb.png
+      _OpacityMap: textures/icons/lightbulb.png
+    tiling: [1,1]
+    ambient: 1.0
+    diffuse: 0.0
+    specular: 0.0
     specularExponent: 0.0
     opticalDensity: 0.0
     dissolve: 1.0
@@ -52,4 +66,12 @@ Meshes:
     rotation: [0, 0, 0]
     scale: [300, 300, 300]
     recalculateNormals: true
-    excludeInShadowMap: true
+
+  sunIcon:
+    path: models/quad/plane_rotated.obj
+    material: sunIconMat
+    position: [150, 150, 150]
+    rotation: [0, 0, 0]
+    scale: [5, 5, 5]
+    isIcon: true
+    recalculateNormals: true

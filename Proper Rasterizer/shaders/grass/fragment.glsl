@@ -10,6 +10,8 @@ uniform sampler2D opacityMap;
 uniform sampler2D heightMap;
 uniform sampler2D shadowMap;
 
+uniform bool useOpacityMap;
+
 in vec3 position;
 in vec2 uv;
 in vec3 normal;
@@ -92,7 +94,7 @@ void main(){
     // set fragment color
     //FragColor = vec4(grassColor, 1.0);
 
-    if (opacity < 0.5) discard;
+    if (opacity < 0.5 && useOpacityMap) discard;
 
     FragColor = vec4(albedo * shadow * normalLighting, 1.0);
 }

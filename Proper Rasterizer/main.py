@@ -66,7 +66,7 @@ class Scene:
         self.shadow_map_size = 4096
 
         self.sun = Light(np.array([1,1,1],"f"),1)
-        self.sun.transform.position = np.array([30, 50, 30], "f")
+        self.sun.transform.position = np.array([-150, 150, -150], "f")
 
         self.skybox = Skybox()
 
@@ -231,8 +231,10 @@ class Scene:
         glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, projection_matrix)
 
         # light uniforms
-        glUniform3fv(shader.get_keyword("viewPos"), 1, self.camera.transform.position)
+        normalizedLightDir = -self.sun.transform.position / np.linalg.norm(self.sun.transform.position)
         glUniform3fv(shader.get_keyword("lightPos"), 1, self.sun.transform.position)
+        glUniform3fv(shader.get_keyword("lightDir"), 1, normalizedLightDir)
+
         # light space matrix
         lightSpaceMatrix = self.sun.getLightSpaceMatrix()
         glUniformMatrix4fv(shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, lightSpaceMatrix)
@@ -250,8 +252,9 @@ class Scene:
         glBindTexture(GL_TEXTURE_2D, self.cameraDepthMap)
         glUniform1i(shader.get_keyword("cameraDepthMap"), 11)
 
-        # camera forward
-        glUniform3fv(shader.get_keyword("viewDir"), 1, self.camera.transform.forward())
+        # camera
+        glUniform3fv(shader.get_keyword("camPos"), 1, -self.camera.transform.position)
+        glUniform3fv(shader.get_keyword("camFwd"), 1, -self.camera.forward())
 
         mesh.material.use(shader)
 
@@ -288,8 +291,12 @@ class Scene:
                 #mesh.transform.lookAt(np.array([np.sin(current_time()),0,np.cos(current_time())]), np.array([0, 1, 0]))
                 # rotate to look at camera
                 mesh.transform.lookAtSelf(-self.camera.transform.position, np.array([0, 1, 0]))
+                mesh.transform.rotateAxis(np.array([0, 1, 0]), 90)
+                mesh.transform.rotateAxis(np.array([1,0,0]), -90)
 
             mesh.update(dt)
+
+        self.get_mesh("sunIcon").transform.position = self.sun.transform.position
 
         #self.meshes[0].transform.position = self.sun.transform.position
 

@@ -77,9 +77,12 @@ def ProceduralTerrain(obj):
 def ScaleAnimation(object, dt):
     object.transform.scale = np.array([1,1,1]) * np.sin(time.time() * 4) * 0.5 + 1.5
 
+def MoveUpDown(object, dt):
+    object.transform.position[1] = np.sin(time.time() * 4) * 0.5 + 1.5
 
 Programs = {
     "RotateOverTime": RotateOverTime,
     "ProceduralTerrain": ProceduralTerrain,
-    "ScaleAnimation": ScaleAnimation
+    "ScaleAnimation": ScaleAnimation,
+    "MoveUpDown": MoveUpDown
 }

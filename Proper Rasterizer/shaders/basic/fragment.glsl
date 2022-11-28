@@ -1,6 +1,6 @@
 #version 330 core
 
-in vec3 Position;
+in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
 
@@ -21,7 +21,10 @@ uniform vec2 tiling = vec2(1.0, 1.0);
 uniform vec2 tiling_speed = vec2(0.0, 0.0);
 
 uniform vec3 lightPos;
-uniform vec3 viewDir;
+uniform vec3 lightDir;
+
+uniform vec3 camPos;
+uniform vec3 camFwd;
 
 // material properties
 uniform float Ka; // ambient
@@ -32,6 +35,12 @@ uniform float Ns; // shininess (specular exponent)
 uniform float Ni; // optical density (index of refraction)
 uniform float d; // dissolve (opacity)
 uniform int illum; // illumination model
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+in vec3 fragWorldPos;
 
 #define PI 3.1415926535917932384626433832795
 
@@ -143,23 +152,25 @@ void main(){
 
     float alpha = texture(_MainTex, uv).a;
 
-    vec3 lightDir = normalize(lightPos - Position);
     float NdotL = max(dot(Normal, lightDir), 0.0);
     //vec3 color = albedo * softShadows(NdotL) * NdotL;
-    
+
     float ambient = Ka;
     float diffuse = Kd * NdotL;
-    float specular = Ks * pow(max(dot(reflect(-lightDir, Normal), normalize(viewDir)), 0.0), Ns);
+    vec3 viewDir = normalize(camPos - fragWorldPos);
+    vec3 reflectedDir = reflect(-lightDir, Normal);
+    float spec = 1.0 * pow(max(dot(viewDir, reflectedDir), 0.0), 32.0);
 
-    vec3 combined = (ambient + diffuse + specular) * albedo;
-    vec3 color = combined * softShadows(NdotL);
+    vec3 combined = (diffuse + spec) * albedo;
+    vec3 color = combined * softShadows(NdotL) + ambient * albedo;
 
     // apply reflections from the skybox
-    /*vec3 reflectDir = reflect(-lightDir, Normal);
-    vec3 skyColor = texture(_Skybox, reflectDir).rgb;
-    color = mix(color, skyColor, 0.0);*/
+    vec3 viewVector = normalize(fragWorldPos - camPos);
+    vec3 reflection = reflect(viewVector, Normal);
+    vec3 skyColor = texture(_Skybox, reflection).rgb;
+    color = mix(color, skyColor, 0.1);
 
-    //if (alpha < 0.5) discard;
+    if (alpha < 0.5) discard;
 
     FragColor = vec4(color, 1.0);
 }
