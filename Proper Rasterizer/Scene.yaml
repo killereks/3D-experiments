@@ -15,7 +15,7 @@ Materials:
       _MainTex: textures/water_high.png
       _RoughnessMap: textures/water_high_roughness.png
       _NormalMap: textures/water_high_normal.png
-    tiling: [50,50]
+    tiling: [10,10]
     tiling_speed: [0.1,0.1]
     ambient: 0.3
     diffuse: 0.4
@@ -30,6 +30,17 @@ Materials:
     tiling: [1,1]
     ambient: 1.0
     diffuse: 0.0
+    specular: 0.0
+    specularExponent: 0.0
+    metallic: 0.0
+
+  lilyMat:
+    textures:
+      _MainTex: textures/lily/color.png
+      _NormalMap: textures/lily/normal.png
+    tiling: [1,1]
+    ambient: 0.2
+    diffuse: 1.0
     specular: 0.0
     specularExponent: 0.0
     metallic: 0.0

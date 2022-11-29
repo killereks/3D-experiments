@@ -13,7 +13,7 @@ from OpenGL.GL import *
 
 from PIL import Image
 
-import matplotlib.pyplot as plt
+import random
 
 def RotateOverTime(object, dt):
     object.transform.rotation *= Quaternion.FromAxisAngle([0, 1, 0], dt * 10)
@@ -80,9 +80,16 @@ def ScaleAnimation(object, dt):
 def MoveUpDown(object, dt):
     object.transform.position[1] = np.sin(time.time() * 4) * 0.5 + 1.5
 
+def LilyAnimation(object, dt):
+    random.seed = object.transform.position[0] + object.transform.position[1] + object.transform.position[2]
+    dir = random.random() * 2 * np.pi
+
+    object.transform.rotateAxis([0, 1, 0], dt * dir)
+
 Programs = {
     "RotateOverTime": RotateOverTime,
     "ProceduralTerrain": ProceduralTerrain,
     "ScaleAnimation": ScaleAnimation,
-    "MoveUpDown": MoveUpDown
+    "MoveUpDown": MoveUpDown,
+    "LilyAnimation": LilyAnimation
 }

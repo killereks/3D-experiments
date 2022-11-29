@@ -26,6 +26,8 @@ from PostProcessing import PostProcessing
 from Programs import Programs
 from GrassField import GrassField
 
+import random
+
 import yaml
 
 from custom_logging import LOG, LogLevel
@@ -540,6 +542,7 @@ fern_field.setup(scene.camera,
                     1_000, 0.5)
 
 fern_field.shadowMap = scene.depthMap
+
 
 
 scene.run()
