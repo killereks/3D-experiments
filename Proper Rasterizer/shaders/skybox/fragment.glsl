@@ -6,7 +6,9 @@ in vec3 texCoords;
 
 uniform samplerCube skybox;
 
+uniform vec3 sunColor;
+
 void main(){
-    FragColor = texture(skybox, texCoords);
-    //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    vec3 color = texture(skybox, texCoords).rgb * sunColor;
+    FragColor = vec4(color, 1.0);
 }

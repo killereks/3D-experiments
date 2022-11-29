@@ -15,6 +15,8 @@ uniform vec3 camRight;
 uniform mat4 projection;
 uniform mat4 view;
 
+uniform vec3 sunColor;
+
 uniform float time;
 
 #define USE_ACES 1
@@ -89,6 +91,7 @@ float worldToShadow(vec3 worldPos){
     return shadow;
 }
 
+// https://en.wikipedia.org/wiki/Academy_Color_Encoding_System
 vec3 ACES(vec3 colorInput){
     mat3x3 rgb2aces = mat3x3(
         1.0498110175, 0.0000000000, -0.0000974845,
@@ -179,7 +182,9 @@ void main(){
     vec3 color = albedo;
 
     #if USE_VOLUMETRIC_LIGHT
-        color = VolumetricLighting(color, TexCoords, Position);
+        if (length(sunColor) > 0.5){
+            color = VolumetricLighting(color, TexCoords, Position);
+        }
     #endif
 
     # if USE_FILM_GRAIN

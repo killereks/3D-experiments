@@ -50,9 +50,6 @@ class GrassField:
         glBindBuffer(GL_ARRAY_BUFFER, self.bitangentbo)
         glBufferData(GL_ARRAY_BUFFER, self.mesh.bitangents, GL_STATIC_DRAW)
 
-        print("T",self.mesh.tangents)
-        print("B",self.mesh.bitangents)
-
         self.albedo = albedo
         self.opacity = opacity
         self.normal = normal
@@ -65,7 +62,7 @@ class GrassField:
 
         self.shadowMap = None
 
-    def draw(self, shader, time, isShadowMap):
+    def draw(self, shader, time, isShadowMap, viewIndex):
         # both sided drawing
         glDisable(GL_CULL_FACE)
 
@@ -77,6 +74,7 @@ class GrassField:
 
         glUniform3fv(shader.get_keyword("sunPos"), 1, self.sun.transform.position)
         glUniform3fv(shader.get_keyword("sunDirection"), 1, -self.sun.transform.position)
+        glUniform3fv(shader.get_keyword("sunColor"), 1, self.sun.color)
 
         # lightSpaceMatrix
         glUniformMatrix4fv(shader.get_keyword("lightSpaceMatrix"), 1, GL_TRUE, self.sun.getLightSpaceMatrix())
@@ -104,6 +102,8 @@ class GrassField:
         glUniform1f(shader.get_keyword("spawnRadius"), self.spawnRadius)
         
         glUniform2fv(shader.get_keyword("worldYBounds"), 1, self.worldYBounds)
+
+        glUniform1i(shader.get_keyword("DEBUG_VIEW"), viewIndex)
 
         #glActiveTexture(GL_TEXTURE0)
         #glBindTexture(GL_TEXTURE_2D, self.heightTexture)

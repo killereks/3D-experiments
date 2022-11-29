@@ -26,6 +26,8 @@ from PostProcessing import PostProcessing
 from Programs import Programs
 from GrassField import GrassField
 
+from MathUtils import *
+
 import random
 
 import yaml
@@ -68,7 +70,11 @@ class Scene:
         self.shadow_map_size = 4096
 
         self.sun = Light(np.array([1,1,1],"f"),1)
-        self.sun.transform.position = np.array([-150, 150, -150], "f")
+        #self.sun.transform.position = np.array([-150, 150, -150], "f")
+
+        self.timeOfDay = 8
+
+        self.calculateSun()
 
         self.skybox = Skybox()
 
@@ -86,6 +92,8 @@ class Scene:
         # initialize shadow map
         self.initialize_shadow_map()
         self.initialize_camera_depth_map()
+
+        self.debugview = 0
         
 
     def initialize_shadow_map(self):
@@ -174,7 +182,7 @@ class Scene:
         glClear(GL_DEPTH_BUFFER_BIT)
         
         self.draw_scene(shadow_map_shader)
-        tree_field.draw(shadow_map_trees_shader, current_time(), True)
+        tree_field.draw(shadow_map_trees_shader, current_time(), True, 0)
 
         # save depthMap to file
         if not initialized:
@@ -236,6 +244,7 @@ class Scene:
         normalizedLightDir = -self.sun.transform.position / np.linalg.norm(self.sun.transform.position)
         glUniform3fv(shader.get_keyword("lightPos"), 1, self.sun.transform.position)
         glUniform3fv(shader.get_keyword("lightDir"), 1, normalizedLightDir)
+        glUniform3fv(shader.get_keyword("sunColor"), 1, self.sun.color)
 
         # light space matrix
         lightSpaceMatrix = self.sun.getLightSpaceMatrix()
@@ -287,6 +296,8 @@ class Scene:
         """
         #self.sun.transform.position = np.array([np.cos(current_time()) * 10, 2, np.sin(current_time()) * 10])
 
+        self.debugView()
+
         for mesh in self.meshes:
             if mesh.isIcon:
                 #mesh.transform.position = self.sun.transform.position
@@ -301,6 +312,92 @@ class Scene:
         self.get_mesh("sunIcon").transform.position = self.sun.transform.position
 
         #self.meshes[0].transform.position = self.sun.transform.position
+
+    def debugView(self):
+        """
+        Allows user to click numbers from 0 to 9 to select drawing mode.
+        """
+        # pygame get key pressed
+        keys = pygame.key.get_pressed()
+
+        key_map = {
+            pygame.K_0: 0,
+            pygame.K_1: 1,
+            pygame.K_2: 2,
+            pygame.K_3: 3,
+            pygame.K_4: 4,
+            pygame.K_5: 5,
+            pygame.K_6: 6,
+            pygame.K_7: 7,
+            pygame.K_8: 8,
+            pygame.K_9: 9
+        }
+
+        for key in key_map:
+            if keys[key]:
+                self.debugview = key_map[key]
+
+        # plus on keypad
+        if keys[pygame.K_KP_PLUS]:
+            self.timeOfDay += 0.03
+            self.timeOfDay %= 24
+
+            self.calculateSun()
+        
+        # minus on keypad
+        if keys[pygame.K_KP_MINUS]:
+            self.timeOfDay -= 0.03
+            self.timeOfDay %= 24
+
+            self.calculateSun()
+
+    def calculateSun(self):
+        """
+        Calculates the sun's position based on the time of day. And the sun's color.
+        """
+
+        # calculate sun position
+        #self.sun.transform.position = np.array([np.cos(self.timeOfDay / 24 * 2 * np.pi) * 150, 100, np.sin(self.timeOfDay / 24 * 2 * np.pi) * 150])
+
+        x = np.sin(self.timeOfDay / 24 * 2 * np.pi) * 150
+        y = -np.cos(self.timeOfDay / 24 * 2 * np.pi) * 150
+        z = np.cos(self.timeOfDay / 24 * 2 * np.pi) * 50
+
+        # calculate sun color
+        sunColor = np.array([1, 1, 1])
+
+        full_bright = np.array([1, 1, 1])
+        full_dark = np.array([0.1, 0.1, 0.1])
+        orange = np.array([1, 0.5, 0.1])
+        
+        # 9 to 18, full brightness [1,1,1]
+        # 18 to 22, orange [1,0.5,0]
+        # 22 to 23, black
+        # 23 to 24, black
+        # 0 to 5, black
+        # 5 to 9, orange
+        
+        if self.timeOfDay >= 9 and self.timeOfDay < 18:
+            perc = MathUtils.InverseLerp(9, 18, self.timeOfDay)
+            sunColor = full_bright
+        elif self.timeOfDay >= 18 and self.timeOfDay < 22:
+            perc = MathUtils.InverseLerp(18, 22, self.timeOfDay)
+            sunColor = MathUtils.Lerp(full_bright, orange, perc)
+        elif self.timeOfDay >= 22 and self.timeOfDay < 24:
+            perc = MathUtils.InverseLerp(22, 24, self.timeOfDay)
+            sunColor = MathUtils.Lerp(orange, full_dark, perc)
+        elif self.timeOfDay >= 0 and self.timeOfDay < 5:
+            sunColor = full_dark
+        elif self.timeOfDay >= 5 and self.timeOfDay < 7:
+            perc = MathUtils.InverseLerp(5, 7, self.timeOfDay)
+            sunColor = MathUtils.Lerp(full_dark, orange, perc)
+        elif self.timeOfDay >= 7 and self.timeOfDay < 9:
+            perc = MathUtils.InverseLerp(7, 9, self.timeOfDay)
+            sunColor = MathUtils.Lerp(orange, full_bright, perc)
+
+        self.sun.transform.position = np.array([x,y,z])
+
+        self.sun.color = sunColor
 
 
     def run(self):
@@ -339,11 +436,11 @@ class Scene:
 
             self.draw_scene(lit_shader)
 
-            grass_field.draw(grass_shader, current_time(), False)
-            tree_field.draw(grass_shader, current_time(), False)
-            fern_field.draw(grass_shader, current_time(), False)
+            grass_field.draw(grass_shader, current_time(), False, self.debugview)
+            tree_field.draw(grass_shader, current_time(), False, self.debugview)
+            fern_field.draw(grass_shader, current_time(), False, self.debugview)
 
-            self.skybox.draw(skybox_shader, self.camera)
+            self.skybox.draw(skybox_shader, self.camera, self.sun)
             self.postprocessing.after_draw()
 
             # refreshing
@@ -542,7 +639,5 @@ fern_field.setup(scene.camera,
                     1_000, 0.5)
 
 fern_field.shadowMap = scene.depthMap
-
-
 
 scene.run()

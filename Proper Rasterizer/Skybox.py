@@ -6,6 +6,7 @@ import pygame
 
 from Camera import Camera
 from Shader import Shader
+from Light import Light
 
 import numpy as np
 
@@ -53,7 +54,7 @@ class Skybox:
 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, self.skyboxMesh.faces, GL_STATIC_DRAW)
 
-    def draw(self, shader: Shader, camera: Camera):
+    def draw(self, shader: Shader, camera: Camera, sun: Light):
         """
         Draws the skybox
         
@@ -77,6 +78,8 @@ class Skybox:
         glUniformMatrix4fv(shader.get_keyword("view"), 1, GL_TRUE, view)
         glUniformMatrix4fv(shader.get_keyword("projection"), 1, GL_TRUE, proj)
         glUniform1i(shader.get_keyword("skybox"), 1)
+
+        glUniform3fv(shader.get_keyword("sunColor"), 1, sun.color)
         
         glBindVertexArray(self.vao)
         glActiveTexture(GL_TEXTURE1)

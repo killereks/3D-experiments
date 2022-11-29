@@ -186,13 +186,13 @@ void main(){
         gl_Position = projection * view * worldPos;
     }
 
-    position = pos;
+    position = vec3(worldPos);
     uv = vec2(vUV.x, vUV.y);
     // transform normals to world space
     // Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     m_ID = gl_InstanceID;
 
-    mat3 modelVector = inverse(mat3(model));
+    mat3 modelVector = transpose(inverse(mat3(transpose(model))));
 
     vec3 T = normalize(modelVector * tangent);
     vec3 B = normalize(modelVector * bitangent);

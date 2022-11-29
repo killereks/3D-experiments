@@ -67,6 +67,7 @@ class PostProcessing:
 
         # normalized light direction towards origin
         glUniform3fv(self.shader.get_keyword("lightDir"), 1, -self.sun.transform.position)
+        glUniform3fv(self.shader.get_keyword("sunColor"), 1, self.sun.color)
 
         glUniformMatrix4fv(self.shader.get_keyword("view"), 1, GL_TRUE, self.camera.getViewMatrix())
         glUniformMatrix4fv(self.shader.get_keyword("projection"), 1, GL_TRUE, self.camera.projectionMatrix)

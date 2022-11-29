@@ -25,6 +25,7 @@ uniform vec2 tiling_speed = vec2(0.0, 0.0);
 
 uniform vec3 lightPos;
 uniform vec3 lightDir;
+uniform vec3 sunColor;
 
 uniform vec3 camPos;
 uniform vec3 camFwd;
@@ -156,5 +157,5 @@ void main(){
     // apply shadows
     color *= shadow;
     
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color * sunColor, 1.0);
 }

@@ -4,6 +4,7 @@ out vec4 FragColor;
 
 uniform vec3 sunPosition;
 uniform vec3 sunDirection;
+uniform vec3 sunColor;
 
 uniform sampler2D albedoMap;
 uniform sampler2D opacityMap;
@@ -12,6 +13,14 @@ uniform sampler2D shadowMap;
 uniform sampler2D normalMap;
 
 uniform bool useOpacityMap;
+
+// 0 = default
+// 1 = normal view
+// 2 = shadow view
+// 3 = height view
+// 4 = UV view
+// 5 = position view
+uniform int DEBUG_VIEW = 0;
 
 in vec3 position;
 in vec2 uv;
@@ -79,9 +88,17 @@ void main(){
     // 2E5A1E
     vec3 grassColor4 = vec3(0.180, 0.353, 0.118);
 
-    vec3 normal = texture(normalMap, uv).rgb;
-    normal = normal * 2.0 - 1.0;
-    normal = normalize(TBN * normal);
+    vec3 normal = Normal;
+
+    if (DEBUG_VIEW == 8){
+        normal = texture(normalMap, uv).rgb;
+        normal = normal * 2.0 - 1.0;
+        normal = normalize(TBN * normal);
+    }
+
+    if (!gl_FrontFacing){
+        normal = -normal;
+    }
 
     // pick grass color based on UV using mix
     vec3 grassColor = mix(mix(grassColor1, grassColor2, uv.y), mix(grassColor3, grassColor4, uv.y), uv.x);
@@ -107,5 +124,35 @@ void main(){
 
     if (opacity < 0.5 && useOpacityMap) discard;
 
-    FragColor = vec4(albedo * shadow * normalLighting, 1.0);
+    // default
+    switch (DEBUG_VIEW){
+        case 0:
+            FragColor = vec4(albedo * shadow * normalLighting * sunColor, 1.0);
+            break;
+        case 1:
+            FragColor = vec4(normal, 1.0);
+            break;
+        case 2:
+            FragColor = vec4(shadow, shadow, shadow, 1.0);
+            break;
+        case 3:
+            FragColor = vec4(mapHeight, mapHeight, mapHeight, 1.0);
+            break;
+        case 4:
+            FragColor = vec4(uv, 0.0, 1.0);
+            break;
+        case 5:
+            FragColor = vec4(position, 1.0);
+            break;
+        case 6:
+            if (gl_FrontFacing){
+                FragColor = vec4(Normal, 1.0);
+            } else {
+                FragColor = vec4(-Normal, 1.0);
+            }
+            break;
+        default:
+            FragColor = vec4(albedo * shadow * normalLighting, 1.0);
+    }
+
 }
