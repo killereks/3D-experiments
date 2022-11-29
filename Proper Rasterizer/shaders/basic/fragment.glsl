@@ -14,6 +14,7 @@ uniform float time;
 
 uniform sampler2D _MainTex;
 uniform sampler2D _RoughnessMap;
+uniform sampler2D _NormalMap;
 
 uniform samplerCube _Skybox;
 
@@ -103,7 +104,11 @@ void main(){
 
     if (alpha < 0.5) discard;
 
-    vec3 N = normalize(Normal);
+    vec3 normal = texture(_NormalMap, uv).rgb;
+    normal = normal * 2.0 - 1.0;
+    normal = normalize(TBN * normal);
+
+    vec3 N = normalize(normal);
     vec3 V = normalize(camPos - fragWorldPos);
 
     vec3 baseReflectivity = mix(vec3(0.04), albedo, metallic);
@@ -128,18 +133,27 @@ void main(){
     float shadow = softShadows(NdotL);
     if (shadow < 1.0) specular = vec3(0.0);
 
+    // diffuse
     vec3 kD = vec3(1.0) - F;
 
+    // conserve energy
     kD *= 1.0 - metallic;
 
+    // diffuse and ambient
     Lo += (kD * albedo / PI + specular) * NdotL;
 
     vec3 ambient = vec3(0.03) * albedo;
 
     vec3 color = ambient + Lo;
+    
+    //color = color / (color + vec3(1.0));
 
-    color = color / (color + vec3(1.0));
+    // skybox reflection
+    vec3 R = reflect(-V, N);
+    vec3 envColor = texture(_Skybox, R).rgb;
+    color = mix(color, envColor, metallic);
 
+    // apply shadows
     color *= shadow;
     
     FragColor = vec4(color, 1.0);

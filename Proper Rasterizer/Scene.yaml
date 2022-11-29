@@ -1,16 +1,9 @@
 Materials:
-  treeMat:
-    textures:
-      _MainTex: textures/tree/tree_albedo.png
-    tiling: [1,1]
-    ambient: 0.2
-    diffuse: 1.0
-    specular: 0.0
-    specularExponent: 0.0
-    metallic: 0.0
   groundMat:
     textures:
       _MainTex: textures/Ground/color.jpg
+      _NormalMap: textures/Ground/normal.jpg
+      _RoughnessMap: textures/Ground/roughness.jpg
     tiling: [20,20]
     ambient: 0.2
     diffuse: 1.0
@@ -21,13 +14,14 @@ Materials:
     textures:
       _MainTex: textures/water_high.png
       _RoughnessMap: textures/water_high_roughness.png
+      _NormalMap: textures/water_high_normal.png
     tiling: [50,50]
-    tiling_speed: [0,0]
-    ambient: 0.2
-    diffuse: 0.2
-    specular: 1.0
+    tiling_speed: [0.1,0.1]
+    ambient: 0.3
+    diffuse: 0.4
+    specular: 0.5
     specularExponent: 32.0
-    metallic: 0.2
+    metallic: 0.0
 
   sunIconMat:
     textures:
@@ -36,17 +30,6 @@ Materials:
     tiling: [1,1]
     ambient: 1.0
     diffuse: 0.0
-    specular: 0.0
-    specularExponent: 0.0
-    metallic: 0.0
-
-  fernMat:
-    textures:
-      _MainTex: textures/Fern/color.jpg
-      _OpacityMap: textures/Fern/opacity.jpg
-    tiling: [1,1]
-    ambient: 0.2
-    diffuse: 1.0
     specular: 0.0
     specularExponent: 0.0
     metallic: 0.0
@@ -78,3 +61,13 @@ Meshes:
     scale: [5, 5, 5]
     isIcon: true
     recalculateNormals: true
+
+  sphere:
+    path: models/quad/quad.obj
+    material: groundMat
+    position: [-100, 50, -100]
+    rotation: [90, 180, 0]
+    scale: [5, 5, 5]
+    recalculateNormals: true
+    scripts:
+      - RotateOverTime

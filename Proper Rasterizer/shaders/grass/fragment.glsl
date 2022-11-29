@@ -9,13 +9,16 @@ uniform sampler2D albedoMap;
 uniform sampler2D opacityMap;
 uniform sampler2D heightMap;
 uniform sampler2D shadowMap;
+uniform sampler2D normalMap;
 
 uniform bool useOpacityMap;
 
 in vec3 position;
 in vec2 uv;
-in vec3 normal;
+in vec3 Normal;
 flat in int m_ID;
+
+in mat3 TBN;
 
 in vec3 lightFragPos;
 
@@ -75,6 +78,10 @@ void main(){
     vec3 grassColor3 = vec3(0.243, 0.416, 0.180);
     // 2E5A1E
     vec3 grassColor4 = vec3(0.180, 0.353, 0.118);
+
+    vec3 normal = texture(normalMap, uv).rgb;
+    normal = normal * 2.0 - 1.0;
+    normal = normalize(TBN * normal);
 
     // pick grass color based on UV using mix
     vec3 grassColor = mix(mix(grassColor1, grassColor2, uv.y), mix(grassColor3, grassColor4, uv.y), uv.x);

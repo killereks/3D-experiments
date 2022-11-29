@@ -512,6 +512,7 @@ grass_field.setup(scene.camera,
                   blender.load_mesh("models/jungle/grass_high.obj"),
                   Texture.Load("textures/grass/color.jpg"),
                   Texture.Load("textures/grass/opacity.jpg"),
+                  Texture.Load("textures/grass/normal.png"),
                   500_000, 0.5)
 
 grass_field.shadowMap = scene.depthMap
@@ -523,7 +524,8 @@ tree_field.setup(scene.camera,
                     blender.load_mesh("models/jungle/tree_low.obj"),
                     Texture.Load("textures/tree/tree_albedo.png"),
                     None,
-                    20, 0.5)
+                    Texture.Load("textures/tree/tree_normal.png"),
+                    25, 0.5)
 
 tree_field.shadowMap = scene.depthMap
 
@@ -534,6 +536,7 @@ fern_field.setup(scene.camera,
                     blender.load_mesh("models/jungle/fern.obj"),
                     Texture.Load("textures/Fern/color.jpg"),
                     Texture.Load("textures/Fern/opacity.jpg"),
+                    Texture.Load("textures/Fern/normal.png"),
                     1_000, 0.5)
 
 fern_field.shadowMap = scene.depthMap

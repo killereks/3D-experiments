@@ -3,6 +3,8 @@
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 vUV;
 layout (location = 2) in vec3 inNormal;
+layout (location = 3) in vec3 tangent;
+layout (location = 4) in vec3 bitangent;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -21,7 +23,9 @@ mat4 model;
 
 out vec3 position;
 out vec2 uv;
-out vec3 normal;
+out vec3 Normal;
+
+out mat3 TBN;
 
 out vec3 lightFragPos;
 
@@ -186,8 +190,17 @@ void main(){
     uv = vec2(vUV.x, vUV.y);
     // transform normals to world space
     // Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
-    normal = normalize(transpose(inverse(mat3(model))) * inNormal);
     m_ID = gl_InstanceID;
+
+    mat3 modelVector = inverse(mat3(model));
+
+    vec3 T = normalize(modelVector * tangent);
+    vec3 B = normalize(modelVector * bitangent);
+    vec3 N = normalize(modelVector * inNormal);
+
+    TBN = mat3(T, B, N);
+
+    Normal = N;
 
     lightFragPos = vec3(lightSpaceMatrix * worldPos);
 }

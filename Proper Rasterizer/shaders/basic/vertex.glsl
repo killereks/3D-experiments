@@ -25,14 +25,19 @@ out mat3 TBN;
 void main(){
     fragWorldPos = vec3(model * vec4(vPos, 1.0));
 
-    gl_Position = projection * view * model * vec4(vPos, 1.0);
-
     FragPos = vec3(model * vec4(vPos, 1.0));
-    Normal = normalize(transpose(inverse(mat3(model))) * vNormal);
     TexCoords = vTexCoords;
 
-    TBN = mat3(tangent, bitangent, vNormal);
-    TBN = transpose(TBN);
+    mat3 modelVector = transpose(inverse(mat3(model)));
+
+    vec3 T = normalize(modelVector * tangent);
+    vec3 B = normalize(modelVector * bitangent);
+    vec3 N = normalize(modelVector * vNormal);
+
+    TBN = mat3(T, B, N);
+
+    Normal = N;
 
     FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    gl_Position = projection * view * model * vec4(vPos, 1.0);
 }

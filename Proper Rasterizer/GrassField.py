@@ -10,7 +10,7 @@ from Texture import Texture
 import time
 
 class GrassField:
-    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, amount: int, spawnRadius: float):
+    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, normal: Texture, amount: int, spawnRadius: float):
         self.mesh = mesh
         self.mesh.recalculate_normals()
 
@@ -29,6 +29,9 @@ class GrassField:
         # normals
         self.nbo = glGenBuffers(1)
 
+        self.tangentbo = glGenBuffers(1)
+        self.bitangentbo = glGenBuffers(1)
+
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER, self.mesh.vertices, GL_STATIC_DRAW)
 
@@ -41,8 +44,18 @@ class GrassField:
         glBindBuffer(GL_ARRAY_BUFFER, self.nbo)
         glBufferData(GL_ARRAY_BUFFER, self.mesh.normals, GL_STATIC_DRAW)
 
+        glBindBuffer(GL_ARRAY_BUFFER, self.tangentbo)
+        glBufferData(GL_ARRAY_BUFFER, self.mesh.tangents, GL_STATIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, self.bitangentbo)
+        glBufferData(GL_ARRAY_BUFFER, self.mesh.bitangents, GL_STATIC_DRAW)
+
+        print("T",self.mesh.tangents)
+        print("B",self.mesh.bitangents)
+
         self.albedo = albedo
         self.opacity = opacity
+        self.normal = normal
 
         self.amount = amount
         self.spawnRadius = spawnRadius
@@ -81,6 +94,9 @@ class GrassField:
         self.heightTexture.use(2)
         glUniform1i(shader.get_keyword("heightMap"), 2)
 
+        self.normal.use(3)
+        glUniform1i(shader.get_keyword("normalMap"), 3)
+
         glActiveTexture(GL_TEXTURE3)
         glBindTexture(GL_TEXTURE_2D, self.shadowMap)
         glUniform1i(shader.get_keyword("shadowMap"), 3)
@@ -98,6 +114,7 @@ class GrassField:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo)
 
         glEnableVertexAttribArray(0)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
 
         # 1 = uv
@@ -109,6 +126,16 @@ class GrassField:
         glEnableVertexAttribArray(2)
         glBindBuffer(GL_ARRAY_BUFFER, self.nbo)
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        # 3 = tangents
+        glEnableVertexAttribArray(3)
+        glBindBuffer(GL_ARRAY_BUFFER, self.tangentbo)
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        # 4 = bitangents
+        glEnableVertexAttribArray(4)
+        glBindBuffer(GL_ARRAY_BUFFER, self.bitangentbo)
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, None)
         
         # draw grass
         glDrawElementsInstanced(GL_TRIANGLES, len(self.mesh.faces) * 3, GL_UNSIGNED_INT, None, self.amount)
@@ -116,6 +143,8 @@ class GrassField:
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
         glDisableVertexAttribArray(2)
+        glDisableVertexAttribArray(3)
+        glDisableVertexAttribArray(4)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
