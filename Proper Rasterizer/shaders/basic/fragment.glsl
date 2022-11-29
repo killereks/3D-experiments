@@ -8,6 +8,8 @@ in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
+in mat3 TBN;
+
 uniform float time;
 
 uniform sampler2D _MainTex;
@@ -32,9 +34,7 @@ uniform float Kd; // diffuse
 uniform float Ks; // specular
 
 uniform float Ns; // shininess (specular exponent)
-uniform float Ni; // optical density (index of refraction)
-uniform float d; // dissolve (opacity)
-uniform int illum; // illumination model
+uniform float metallic; // refraction index
 
 uniform mat4 model;
 uniform mat4 view;
@@ -63,114 +63,84 @@ float softShadows(float dotLightNormal){
     float shadow = 0.0;
     
     int size = 2;
-    for (int x = -size; x <= size; ++x) {
-        for (int y = -size; y <= size; ++y) {
-            vec2 offset = vec2(x,y) * texelSize; //random21(vec2(x, y)) * texelSize;
-            float pcfDepth = shadowCalc(dotLightNormal, offset);
-            shadow += pcfDepth;
+    for (int x = -size; x <= size; ++x){
+        for (int y = -size; y <= size; ++y){
+            vec2 offset = vec2(x, y) * texelSize;
+            shadow += shadowCalc(dotLightNormal, offset);
         }
     }
-
-    return shadow / (float(size) * float(size) * 4);
+    shadow /= (float(size) * 2.0 + 1.0) * (float(size) * 2.0 + 1.0);
+    return shadow;
 }
 
-float saturate(float x){
-    return clamp(x, 0.0, 1.0);
+float distributionGGX(float NdotH, float roughness){
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float denom = NdotH * NdotH * (a2 - 1.0) + 1.0;
+    denom = PI * denom * denom;
+
+    return a2 / max(denom, 0.0001);
 }
 
-float phong_diffuse(){
-    return 1.0 / PI;
+float geometrySmith(float NdotV, float NdotL, float roughness){
+    float r = roughness + 1.0;
+    float k = (r * r) / 8.0;
+    float ggx1 = NdotV / (NdotV * (1.0 - k) + k);
+    float ggx2 = NdotL / (NdotL * (1.0 - k) + k);
+    return ggx1 * ggx2;
 }
 
-vec3 fresnel_factor(in vec3 f0, in float product){
-    return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
-}
-
-float D_blinn(in float roughness, in float NdH){
-    float m = roughness * roughness;
-    float m2 = m * m;
-    float n = 2.0 / m2 - 2.0;
-    return (n+2.0) / (2.0 * PI) * pow(NdH, n);
-}
-
-float D_beckmann(in float roughness, in float NdH){
-    float m = roughness * roughness;
-    float m2 = m * m;
-    float NdH2 = NdH * NdH;
-    return exp((NdH2 - 1.0) / (m2 * NdH2)) / (PI * m2 * NdH2 * NdH2);
-}
-
-float D_GGX(in float roughness, in float NdH){
-    float m = roughness * roughness;
-    float m2 = m * m;
-    float d = (NdH * m2 - NdH) * NdH + 1.0;
-    return m2 / (PI * d * d);
-}
-
-float G_shlick(in float roughness, in float NdV, in float NdL){
-    float k = roughness * roughness * 0.5;
-    float V = NdV * (1.0 - k) + k;
-    float L = NdL * (1.0 - k) + k;
-    return 0.25 / (V * L);
-}
-
-vec3 phong_specular(in vec3 V, in vec3 L, in vec3 N, in vec3 specular, in float roughness){
-    vec3 R = reflect(-L, N);
-    float spec = max(0.0, dot(V,R));
-
-    float k = 1.999 / (roughness * roughness);
-
-    return min(1.0, 3.0 * 0.0398 * k) * pow(spec, min(10000.0, k)) * specular;
-}
-
-vec3 blinn_specular(in float NdH, in vec3 specular, in float roughness){
-    float k = 1.999 / (roughness * roughness);
-
-    return min(1.0, 3.0 * 0.0398 * k) * pow(NdH, min(10000.0, k)) * specular;
-}
-
-vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 specular, in float roughness){
-    // if using cook_blinn
-    // float D = D_blinn(roughness, NdH);
-    // if using cook_beckmann
-    // float D = D_beckmann(roughness, NdH);
-    // if using cook_ggx
-    float D = D_GGX(roughness, NdH);
-    float G = G_shlick(roughness, NdV, NdL);
-
-    float rim = mix(1.0 - roughness * 0.9, 1.0, NdV);
-
-    return (1.0 / rim) * specular * G * D;
+vec3 fresnelSchlick(float HdotV, vec3 baseReflectivity){
+    return baseReflectivity + (1.0 - baseReflectivity) * pow(1.0 - HdotV, 5.0);
 }
 
 void main(){
-    vec2 uv = TexCoords * tiling + tiling_speed * time;
+    vec2 uv = TexCoords * tiling + time * tiling_speed;
 
-    // PBR shading
     vec3 albedo = texture(_MainTex, uv).rgb;
-    float roughness = texture(_RoughnessMap, uv).r;
-
     float alpha = texture(_MainTex, uv).a;
-
-    float NdotL = max(dot(Normal, lightDir), 0.0);
-    //vec3 color = albedo * softShadows(NdotL) * NdotL;
-
-    float ambient = Ka;
-    float diffuse = Kd * NdotL;
-    vec3 viewDir = normalize(camPos - fragWorldPos);
-    vec3 reflectedDir = reflect(-lightDir, Normal);
-    float spec = 1.0 * pow(max(dot(viewDir, reflectedDir), 0.0), 32.0);
-
-    vec3 combined = (diffuse + spec) * albedo;
-    vec3 color = combined * softShadows(NdotL) + ambient * albedo;
-
-    // apply reflections from the skybox
-    vec3 viewVector = normalize(fragWorldPos - camPos);
-    vec3 reflection = reflect(viewVector, Normal);
-    vec3 skyColor = texture(_Skybox, reflection).rgb;
-    color = mix(color, skyColor, 0.1);
+    float roughness = texture(_RoughnessMap, uv).r;
 
     if (alpha < 0.5) discard;
 
+    vec3 N = normalize(Normal);
+    vec3 V = normalize(camPos - fragWorldPos);
+
+    vec3 baseReflectivity = mix(vec3(0.04), albedo, metallic);
+
+    vec3 Lo = vec3(0.0);
+    
+    vec3 L = normalize(lightPos - fragWorldPos);
+    vec3 H = normalize(V + L);
+    
+    float NdotV = max(dot(N, V), 0.0000001);
+    float NdotL = max(dot(N, L), 0.0000001);
+    float HdotV = max(dot(H, V), 0.0);
+    float NdotH = max(dot(N, H), 0.0);
+
+    float D = distributionGGX(NdotH, roughness);
+    float G = geometrySmith(NdotV, NdotL, roughness);
+    vec3 F = fresnelSchlick(HdotV, baseReflectivity);
+
+    vec3 specular = D * G * F;
+    specular /= 4.0 * NdotV * NdotL;
+    // don't apply specular if in shadow
+    float shadow = softShadows(NdotL);
+    if (shadow < 1.0) specular = vec3(0.0);
+
+    vec3 kD = vec3(1.0) - F;
+
+    kD *= 1.0 - metallic;
+
+    Lo += (kD * albedo / PI + specular) * NdotL;
+
+    vec3 ambient = vec3(0.03) * albedo;
+
+    vec3 color = ambient + Lo;
+
+    color = color / (color + vec3(1.0));
+
+    color *= shadow;
+    
     FragColor = vec4(color, 1.0);
 }

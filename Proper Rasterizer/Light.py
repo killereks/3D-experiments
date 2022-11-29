@@ -23,8 +23,8 @@ class Light:
 
         :return: the projection matrix for the light
         """
-        size = 200
-        return Camera.getOrthographicMatrix(-size, size, -size, size, -150, 300)
+        size = 250
+        return Camera.getOrthographicMatrix(-size, size, -size, size, -150, 600)
 
     def getLightView(self):
         """

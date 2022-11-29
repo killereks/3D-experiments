@@ -19,12 +19,8 @@ class Material:
         self.Ks = 1
         # specular exponent
         self.Ns = 10.0
-        # optical density
-        self.Ni = 1.0
-        # dissolve
-        self.d = 1.0
-        # illumination
-        self.illum = 2
+        # metallic
+        self.metallic = 0.0
         
         self.textures = {}
 
@@ -69,9 +65,7 @@ class Material:
         glUniform1f(shader.get_keyword("Ks"), self.Ks)
         
         glUniform1f(shader.get_keyword("Ns"), self.Ns)
-        glUniform1f(shader.get_keyword("Ni"), self.Ni)
-        glUniform1f(shader.get_keyword("d"), self.d)
-        glUniform1i(shader.get_keyword("illum"), self.illum)
+        glUniform1f(shader.get_keyword("metallic"), self.metallic)
         
 
     def print(self):

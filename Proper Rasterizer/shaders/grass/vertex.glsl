@@ -122,14 +122,26 @@ float remap(float value, float min1, float max1, float min2, float max2){
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
 }
 
+vec2 randomInsideCircle(float radius, vec2 id){
+    float angle = random21(id) * 2.0 * PI;
+    float r = sqrt(random21(id * PHI)) * radius;
+    return vec2(r * cos(angle), r * sin(angle));
+}
+
+out float mapHeight;
+
 void main(){
     vec2 id = vec2(gl_InstanceID * E * E, gl_InstanceID * PI);
 
     float size = 400.0;
     float halfSize = size * 0.5;
 
-    float x = remap(random21(id), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
-    float z = remap(random21(id + random21(id)), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
+    //float x = remap(random21(id), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
+    //float z = remap(random21(id + random21(id)), 0.0, 1.0, 0.5 - spawnRadius, 0.5 + spawnRadius);
+
+    vec2 posXZ = randomInsideCircle(spawnRadius, id);
+    float x = posXZ.x + 0.5;
+    float z = posXZ.y + 0.5;
 
     // map from -size/2 - size/2 to 0 - heightMapSize
     float heightMapSize = textureSize(heightMap, 0).x;
@@ -142,6 +154,8 @@ void main(){
 
     vec3 pos = vec3(x,0.0,z) * size - halfSize;
     pos.y = height;
+
+    mapHeight = height;
 
     float rotation = random21(pos.xz) * PI * 2.0;
     float scale = rand(id) * 20.0 + 5.0;

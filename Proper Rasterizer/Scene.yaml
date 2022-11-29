@@ -7,9 +7,7 @@ Materials:
     diffuse: 1.0
     specular: 0.0
     specularExponent: 0.0
-    opticalDensity: 0.0
-    dissolve: 1.0
-    illumination: 0
+    metallic: 0.0
   groundMat:
     textures:
       _MainTex: textures/Ground/color.jpg
@@ -18,9 +16,7 @@ Materials:
     diffuse: 1.0
     specular: 0.0
     specularExponent: 0.0
-    opticalDensity: 0.0
-    dissolve: 1.0
-    illumination: 0
+    metallic: 0.0
   waterMat:
     textures:
       _MainTex: textures/water_high.png
@@ -31,9 +27,7 @@ Materials:
     diffuse: 0.2
     specular: 1.0
     specularExponent: 32.0
-    opticalDensity: 0.0
-    dissolve: 1.0
-    illumination: 0
+    metallic: 0.2
 
   sunIconMat:
     textures:
@@ -44,9 +38,18 @@ Materials:
     diffuse: 0.0
     specular: 0.0
     specularExponent: 0.0
-    opticalDensity: 0.0
-    dissolve: 1.0
-    illumination: 0
+    metallic: 0.0
+
+  fernMat:
+    textures:
+      _MainTex: textures/Fern/color.jpg
+      _OpacityMap: textures/Fern/opacity.jpg
+    tiling: [1,1]
+    ambient: 0.2
+    diffuse: 1.0
+    specular: 0.0
+    specularExponent: 0.0
+    metallic: 0.0
 
 Meshes:  
   ground:

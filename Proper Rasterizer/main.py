@@ -339,6 +339,7 @@ class Scene:
 
             grass_field.draw(grass_shader, current_time(), False)
             tree_field.draw(grass_shader, current_time(), False)
+            fern_field.draw(grass_shader, current_time(), False)
 
             self.skybox.draw(skybox_shader, self.camera)
             self.postprocessing.after_draw()
@@ -424,9 +425,7 @@ class Scene:
                 mat.diffuse = material_data["diffuse"]
                 mat.specular = material_data["specular"]
                 mat.specularExponent = material_data["specularExponent"]
-                mat.opticalDensity = material_data["opticalDensity"]
-                mat.dissolve = material_data["dissolve"]
-                mat.illumination = material_data["illumination"]
+                mat.metallic = material_data["metallic"]
 
                 if "tiling_speed" in material_data:
                     mat.tiling_speed = material_data["tiling_speed"]
@@ -524,8 +523,20 @@ tree_field.setup(scene.camera,
                     blender.load_mesh("models/jungle/tree_low.obj"),
                     Texture.Load("textures/tree/tree_albedo.png"),
                     None,
-                    50, 0.2)
+                    20, 0.5)
 
 tree_field.shadowMap = scene.depthMap
+
+fern_field = GrassField()
+fern_field.setup(scene.camera,
+                    scene.sun,
+                    worldYBounds,
+                    blender.load_mesh("models/jungle/fern.obj"),
+                    Texture.Load("textures/Fern/color.jpg"),
+                    Texture.Load("textures/Fern/opacity.jpg"),
+                    1_000, 0.5)
+
+fern_field.shadowMap = scene.depthMap
+
 
 scene.run()

@@ -24,6 +24,9 @@ class Mesh:
         self.nbo = glGenBuffers(1) #normals
         self.tbo = glGenBuffers(1) #texture coordinates
 
+        self.tanbo = glGenBuffers(1) #tangents
+        self.bitbo = glGenBuffers(1) #bitangents
+
         self.transform = Transform()
 
         self.bounds = self.getBoundingBox()
@@ -38,7 +41,42 @@ class Mesh:
 
         self.scripts = []
 
+        # normal map
+        self.tangents = np.zeros(self.vertices.shape, dtype="f")
+        self.bitangents = np.zeros(self.vertices.shape, dtype="f")
+
         self.initialize()
+        self.calculateNormalMap()
+
+    def calculateNormalMap(self):
+        """
+        Calculates the normal map of the mesh
+        """
+        for f in range(self.faces.shape[0]):
+            v0 = self.vertices[self.faces[f, 0]]
+            v1 = self.vertices[self.faces[f, 1]]
+            v2 = self.vertices[self.faces[f, 2]]
+
+            uv0 = self.uvs[self.faces[f, 0]]
+            uv1 = self.uvs[self.faces[f, 1]]
+            uv2 = self.uvs[self.faces[f, 2]]
+
+            deltaPos1 = v1 - v0
+            deltaPos2 = v2 - v0
+
+            deltaUV1 = uv1 - uv0
+            deltaUV2 = uv2 - uv0
+
+            r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0])
+            tangent = (deltaPos1 * deltaUV2[1] - deltaPos2 * deltaUV1[1]) * r
+            bitangent = (deltaPos2 * deltaUV1[0] - deltaPos1 * deltaUV2[0]) * r
+
+            for j in range(3):
+                self.tangents[self.faces[f,j],:] += tangent
+                self.bitangents[self.faces[f,j],:] += bitangent
+
+        self.tangents /= np.linalg.norm(self.tangents, axis=1, keepdims=True)
+        self.bitangents /= np.linalg.norm(self.bitangents, axis=1, keepdims=True)
 
     def add_script(self, script):
         """
@@ -116,6 +154,14 @@ class Mesh:
         glBindBuffer(GL_ARRAY_BUFFER, self.tbo)
         glBufferData(GL_ARRAY_BUFFER, self.uvs, GL_STATIC_DRAW)
 
+        # tangents
+        glBindBuffer(GL_ARRAY_BUFFER, self.tanbo)
+        glBufferData(GL_ARRAY_BUFFER, self.tangents, GL_STATIC_DRAW)
+
+        # bitangents
+        glBindBuffer(GL_ARRAY_BUFFER, self.bitbo)
+        glBufferData(GL_ARRAY_BUFFER, self.bitangents, GL_STATIC_DRAW)
+
     def draw(self):
         """
         Draws the mesh using the currently bound shader
@@ -136,6 +182,15 @@ class Mesh:
         glBindBuffer(GL_ARRAY_BUFFER, self.tbo)
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, None)
 
+        glEnableVertexAttribArray(3)
+        glBindBuffer(GL_ARRAY_BUFFER, self.tanbo)
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        glEnableVertexAttribArray(4)
+        glBindBuffer(GL_ARRAY_BUFFER, self.bitbo)
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+
         glDrawElements(GL_TRIANGLES, self.faces.size, GL_UNSIGNED_INT, None)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -144,6 +199,8 @@ class Mesh:
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
         glDisableVertexAttribArray(2)
+        glDisableVertexAttribArray(3)
+        glDisableVertexAttribArray(4)
 
 
     def update(self, dt: float):
