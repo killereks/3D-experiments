@@ -7,10 +7,14 @@ import numpy as np
 import random
 from Texture import Texture
 
+from Shader import Shader
+from Camera import Camera
+from Light import Light
+
 import time
 
-class GrassField:
-    def setup(self, camera, light, worldYBounds, mesh: Mesh, albedo: Texture, opacity: Texture, normal: Texture, amount: int, spawnRadius: float):
+class InstancedField:
+    def setup(self, camera: Camera, light: Light, worldYBounds: np.array, mesh: Mesh, albedo: Texture, opacity: Texture, normal: Texture, amount: int, spawnRadius: float):
         self.mesh = mesh
         self.mesh.recalculate_normals()
 
@@ -62,7 +66,7 @@ class GrassField:
 
         self.shadowMap = None
 
-    def draw(self, shader, time, isShadowMap, viewIndex):
+    def draw(self, shader: Shader, time: float, isShadowMap: bool, viewIndex: int):
         # both sided drawing
         glDisable(GL_CULL_FACE)
 

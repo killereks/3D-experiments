@@ -92,7 +92,7 @@ class Skybox:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo)
         
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
-
+        
         glDisableVertexAttribArray(0)
         glBindVertexArray(0)
 

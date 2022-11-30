@@ -25,7 +25,7 @@ from PostProcessing import PostProcessing
 from Water import Water
 
 from Programs import Programs
-from GrassField import GrassField
+from InstancedField import InstancedField
 
 from MathUtils import *
 
@@ -607,7 +607,7 @@ scene.load_scene("scene.yaml")
 # calculated manually inside perlin noise generator for a given seed.
 worldYBounds = np.array([-40.0, 22.067507434821415])
 
-grass_field = GrassField()
+grass_field = InstancedField()
 grass_field.setup(scene.camera, 
                   scene.sun,
                   worldYBounds,
@@ -619,7 +619,7 @@ grass_field.setup(scene.camera,
 
 grass_field.shadowMap = scene.depthMap
 
-tree_field = GrassField()
+tree_field = InstancedField()
 tree_field.setup(scene.camera,
                     scene.sun,
                     worldYBounds,
@@ -631,7 +631,7 @@ tree_field.setup(scene.camera,
 
 tree_field.shadowMap = scene.depthMap
 
-fern_field = GrassField()
+fern_field = InstancedField()
 fern_field.setup(scene.camera,
                     scene.sun,
                     worldYBounds,

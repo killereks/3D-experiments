@@ -48,3 +48,6 @@ def LOG(msg:str, level:float=0, override=False):
         print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m', end="\r")
     else:
         print(COLOR + timestamp + "-- [{0:^7}] -- {1:<50}".format(levels[level], msg) + '\033[0m')
+
+# LOG("Hello World!", LogLevel.DEBUG)
+# LOG("Hello World!", LogLevel.INFO, True)
