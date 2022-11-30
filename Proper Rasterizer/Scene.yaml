@@ -55,14 +55,7 @@ Meshes:
     recalculateNormals: false
     one_time_scripts:
       - ProceduralTerrain
-    
-  water:
-    path: models/quad/quad.obj
-    material: waterMat
-    position: [0, -1, 0]
-    rotation: [0, 0, 0]
-    scale: [300, 300, 300]
-    recalculateNormals: true
+  
 
   sunIcon:
     path: models/quad/plane_rotated.obj
@@ -82,3 +75,11 @@ Meshes:
     recalculateNormals: true
     scripts:
       - RotateOverTime
+
+water:
+  path: models/quad/quad.obj
+  material: waterMat
+  position: [0, -1, 0]
+  rotation: [0, 0, 0]
+  scale: [300, 300, 300]
+  recalculateNormals: true

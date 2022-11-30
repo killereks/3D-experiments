@@ -22,6 +22,7 @@ from Light import *
 from Mesh import Mesh
 from Skybox import Skybox
 from PostProcessing import PostProcessing
+from Water import Water
 
 from Programs import Programs
 from GrassField import GrassField
@@ -439,6 +440,7 @@ class Scene:
             grass_field.draw(grass_shader, current_time(), False, self.debugview)
             tree_field.draw(grass_shader, current_time(), False, self.debugview)
             fern_field.draw(grass_shader, current_time(), False, self.debugview)
+            water.draw(water_shader, self.camera, current_time(), self.sun)
 
             self.skybox.draw(skybox_shader, self.camera, self.sun)
             self.postprocessing.after_draw()
@@ -596,6 +598,7 @@ postprocess_shader = Shader.Shader("shaders/postprocess/vertex.glsl", "shaders/p
 camera_depth_shader = Shader.Shader("shaders/camera/camera_depth_vertex.glsl", "shaders/camera/camera_depth_fragment.glsl")
 grass_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/grass/fragment.glsl")
 shadow_map_trees_shader = Shader.Shader("shaders/grass/vertex.glsl", "shaders/shadow_map/shadow_fragment.glsl")
+water_shader = Shader.Shader("shaders/water/vertex.glsl", "shaders/water/fragment.glsl")
 
 scene.postprocessing = PostProcessing(postprocess_shader, scene.width, scene.height)
 
@@ -639,5 +642,7 @@ fern_field.setup(scene.camera,
                     1_000, 0.5)
 
 fern_field.shadowMap = scene.depthMap
+
+water = Water(np.array([0, -2, 0]), np.array([200,200,200]), scene.skybox)
 
 scene.run()
