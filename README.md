@@ -4,6 +4,7 @@ Features:
 - Ray Tracing (reflections, specular/diffuse/ambient lighting model)
 - Ray Marching (animated fractals, infinite shapes)
 
+![image](https://user-images.githubusercontent.com/10748374/228285413-934081fa-562a-45bd-b40a-75a1c6157af5.png)
 
 https://imgur.com/QhXPZP8 (Animation Gif)
 ![image](https://user-images.githubusercontent.com/10748374/194768300-4baadcc5-2446-49cc-81ec-43a0cbe623b4.png)
