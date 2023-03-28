@@ -1,6 +1,6 @@
 # 3D Open GL Experiments
 Features:
-- Rasterization (transformations, textures, loading models from file)
+- Rasterization (transformations, textures, loading models from file, PBR-like shaders, post processing, GPU instancing, volumetric lighting, procedural generation)
 - Ray Tracing (reflections, specular/diffuse/ambient lighting model)
 - Ray Marching (animated fractals, infinite shapes)
 
