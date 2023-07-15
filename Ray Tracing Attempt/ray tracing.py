@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 import time
+import math
 
 from OpenGL.GL.shaders import compileShader, compileProgram
 
@@ -11,6 +12,45 @@ start_time = time.time()
 
 def get_time():
     return time.time() - start_time
+
+class Transform:
+    def __init__(self, position, rotation):
+        self.position = position
+        self.rotation = rotation
+       
+    def forward(self):
+        rotX = self.rotation[0] # pitch
+        rotY = self.rotation[1] # yaw
+        rotZ = self.rotation[2] # roll
+       
+        x = math.sin(rotY) * math.cos(rotX)
+        y = math.sin(-rotX)
+        z = math.cos(rotX) * math.cos(rotY)
+       
+        return numpy.array([x,y,z])
+       
+    def right(self):
+        rotX = self.rotation[0] # pitch
+        rotY = self.rotation[1] # yaw
+        rotZ = self.rotation[2] # roll
+       
+        x = math.cos(rotY)
+        y = 0
+        z = -math.sin(rotY)
+       
+        return numpy.array([x,y,z])
+       
+    def up(self):
+        return numpy.cross(self.forward(), self.right())
+       
+    def move(self, delta):
+        self.position = numpy.add(self.position, delta)
+       
+    def rotate(self, delta):
+        self.rotation = numpy.add(self.rotation, delta)
+       
+    def print(self):
+        print("position", self.position,"rotation",self.rotation)
 
 class RayTracer:
     def __init__(self):
@@ -25,7 +65,9 @@ class RayTracer:
         self.shader.use()
 
         self.cameraPos = numpy.array([0.0, 0.0, -3.0])
-        self.cameraDir = numpy.array([0.0, 0.0, 1.0])
+        self.cameraRot = numpy.array([0.0, 0.0, 0.0])
+
+        self.cameraT = Transform(self.cameraPos, self.cameraRot)
 
         self.running = True
 
@@ -47,25 +89,51 @@ class RayTracer:
             if event.type == pygame.QUIT:
                 self.running = False
 
-        if keys[pygame.K_w]:
-            self.cameraPos += self.cameraDir * 0.1
-        if keys[pygame.K_s]:
-            self.cameraPos -= self.cameraDir * 0.1
-        if keys[pygame.K_a]:
-            self.cameraPos += numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
-        if keys[pygame.K_d]:
-            self.cameraPos -= numpy.cross(self.cameraDir, numpy.array([0.0, 1.0, 0.0])) * 0.1
-        if keys[pygame.K_q]:
-            self.cameraPos += numpy.array([0.0, 1.0, 0.0]) * 0.1
-        if keys[pygame.K_e]:
-            self.cameraPos -= numpy.array([0.0, 1.0, 0.0]) * 0.1
+        fwd = self.cameraT.forward()
+        right = self.cameraT.right()
+        up = self.cameraT.up()
 
+        if keys[pygame.K_w]:
+            self.cameraT.move(fwd * 0.1)
+        if keys[pygame.K_s]:
+            self.cameraT.move(fwd * -0.1)
+        if keys[pygame.K_a]:
+            self.cameraT.move(right * -0.1)
+        if keys[pygame.K_d]:
+            self.cameraT.move(right * 0.1)
+        if keys[pygame.K_e]:
+            self.cameraT.move(up * 0.1)
+        if keys[pygame.K_q]:
+            self.cameraT.move(up * -0.1)
+
+        mouseDelta = pygame.mouse.get_rel()
+        # is mouse held down
+        if pygame.mouse.get_pressed()[0]:
+            deltaX, deltaY = mouseDelta[0], mouseDelta[1]
+        
+            rotation = numpy.array([deltaY, deltaX, 0])
+            self.cameraT.rotate(rotation * 0.01)
+
+    def get_camera_dir(self):
+        cameraDir = numpy.array([0.0, 0.0, 0.0])
+
+        cameraDir[0] = numpy.cos(self.cameraYaw) * numpy.cos(self.cameraPitch)
+        cameraDir[1] = numpy.sin(self.cameraPitch)
+        cameraDir[2] = numpy.sin(self.cameraYaw) * numpy.cos(self.cameraPitch)
+
+        return cameraDir
 
     def update(self):
+        cameraPos = self.cameraT.position
+        cameraFwd = self.cameraT.forward()
+        cameraRight = self.cameraT.right()
+
         glUniform1f(glGetUniformLocation(self.shader.program, "time"), get_time())
         glUniform2f(glGetUniformLocation(self.shader.program, "resolution"), self.width, self.height)
-        glUniform3f(glGetUniformLocation(self.shader.program, "cameraPos"), self.cameraPos[0], self.cameraPos[1], self.cameraPos[2])
-        glUniform3f(glGetUniformLocation(self.shader.program, "cameraDir"), self.cameraDir[0], self.cameraDir[1], self.cameraDir[2])
+        
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraPos"), cameraPos[0], cameraPos[1], cameraPos[2])
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraFwd"), cameraFwd[0], cameraFwd[1], cameraFwd[2])
+        glUniform3f(glGetUniformLocation(self.shader.program, "cameraRight"), cameraRight[0], cameraRight[1], cameraRight[2])
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
